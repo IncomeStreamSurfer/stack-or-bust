@@ -994,7 +994,10 @@
                     </div>
                 </div>
 
-                <div class="result-options" id="recap-options"></div>
+                <div class="result-options mb-8" id="recap-options"></div>
+                <div class="text-center">
+                    <p class="cyan" style="font-size: 8px; animation: pulse 1s infinite alternate;">PRESS SPACE TO PLAY AGAIN</p>
+                </div>
             </div>
         </div>
 
@@ -1806,10 +1809,18 @@ function renderCompendium() {
 }
 
 document.addEventListener('keydown', e => {
-    if ((G.screen === 'match' || G.screen === 'tutorial') && !G.matchOver && (e.code === 'Space' || e.code === 'Enter')) {
+    if ((e.code === 'Space' || e.code === 'Enter')) {
         e.preventDefault();
-        if (G.screen === 'tutorial') tutorialNext();
-        else revealNextCards();
+
+        // Match in progress - draw cards
+        if ((G.screen === 'match' || G.screen === 'tutorial') && !G.matchOver && !G.autoDrawing) {
+            if (G.screen === 'tutorial') tutorialNext();
+            else revealNextCards();
+        }
+        // Match over - play again with same stake
+        else if (G.screen === 'match' && G.matchOver && G.currentStake) {
+            startMatch(G.currentStake.id);
+        }
     }
 });
 </script>
