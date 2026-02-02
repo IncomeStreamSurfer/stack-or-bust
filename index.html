@@ -1297,13 +1297,9 @@ function renderTutorialMatch() {
     const btn = document.getElementById('tut-next-btn');
     btn.disabled = false;
     if (G.matchOver) {
-        btn.textContent = 'FINISH TUTORIAL';
-    } else if (G.autoDrawing) {
-        btn.textContent = 'SKIP >';
-    } else if (G.revealIndex >= 2) {
-        btn.textContent = 'RESOLVE';
+        btn.textContent = 'DONE';
     } else {
-        btn.textContent = 'DRAW CARDS';
+        btn.textContent = G.autoDrawing ? 'SKIP >' : 'DRAW';
     }
 }
 
@@ -1395,18 +1391,9 @@ function renderMatch() {
     G.player.cards.forEach((c, i) => pc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
 
     const btn = document.getElementById('next-btn');
-    const max = Math.max(G.player.cards.length, G.opponent.cards.length);
     btn.style.display = G.matchOver ? 'none' : 'block';
     btn.disabled = false;
-    if (G.autoDrawing) {
-        btn.textContent = 'SKIP >';
-    } else if (G.revealIndex >= 2 && G.revealIndex < max - 1) {
-        btn.textContent = 'CONTINUE';
-    } else if (G.revealIndex >= max - 1) {
-        btn.textContent = 'RESOLVE';
-    } else {
-        btn.textContent = 'DRAW CARDS';
-    }
+    btn.textContent = G.autoDrawing ? 'SKIP >' : 'DRAW';
 }
 
 function revealNextCards(isTutorial = false, manualDraw = false) {
