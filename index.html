@@ -960,15 +960,41 @@
                 <div class="cards-row" id="player-cards"></div>
             </div>
 
-            <div class="panel flex-1 flex flex-col mb-8">
+            <div class="panel flex-1 flex flex-col mb-8" id="combat-log-panel">
                 <div class="panel-title">COMBAT LOG</div>
                 <div class="combat-log flex-1" id="combat-log"></div>
             </div>
 
-            <div class="flex justify-center">
+            <div class="flex justify-center" id="draw-btn-container">
                 <button class="btn primary big" id="next-btn" onclick="revealNextCards()">
                     DRAW CARDS
                 </button>
+            </div>
+
+            <!-- Match Recap (shown when match ends) -->
+            <div id="match-recap" style="display: none;">
+                <div class="panel text-center mb-8" style="padding: 16px;">
+                    <h2 id="recap-title" class="green mb-4" style="font-size: 16px;">VICTORY!</h2>
+                    <p class="gold" style="font-size: 9px;" id="recap-winnings"></p>
+                    <p class="muted" style="font-size: 6px; margin-top: 4px;" id="recap-fee"></p>
+                </div>
+
+                <div class="flex gap-8 mb-8">
+                    <div class="panel flex-1 text-center" style="padding: 10px;">
+                        <p style="font-size: 6px;" class="mb-4">YOUR HP</p>
+                        <p style="font-size: 12px;" id="recap-player-hp" class="green">0</p>
+                    </div>
+                    <div class="panel flex-1 text-center" style="padding: 10px;">
+                        <p style="font-size: 6px;" class="mb-4">ENEMY HP</p>
+                        <p style="font-size: 12px;" id="recap-opponent-hp" class="red">0</p>
+                    </div>
+                    <div class="panel flex-1 text-center" style="padding: 10px;">
+                        <p style="font-size: 6px;" class="mb-4">SEED</p>
+                        <p style="font-size: 8px;" id="recap-seed" class="muted">0</p>
+                    </div>
+                </div>
+
+                <div class="result-options" id="recap-options"></div>
             </div>
         </div>
 
@@ -1375,6 +1401,11 @@ function startMatch(stakeId) {
 }
 
 function renderMatch() {
+    // Reset UI visibility
+    document.getElementById('combat-log-panel').style.display = 'flex';
+    document.getElementById('draw-btn-container').style.display = 'flex';
+    document.getElementById('match-recap').style.display = 'none';
+
     document.getElementById('match-stake-label').textContent = `${G.currentStake.label} MATCH`;
     document.getElementById('match-seed').textContent = G.matchSeed;
     document.getElementById('opponent-name').textContent = G.opponent.name;
@@ -1397,7 +1428,15 @@ function renderMatch() {
     const max = Math.max(G.player.cards.length, G.opponent.cards.length);
     btn.style.display = G.matchOver ? 'none' : 'block';
     btn.disabled = G.autoDrawing;
-    btn.textContent = G.autoDrawing ? 'DRAWING...' : (G.revealIndex >= max - 1 ? 'RESOLVE' : 'DRAW CARDS');
+    if (G.autoDrawing) {
+        btn.textContent = 'DRAWING...';
+    } else if (G.revealIndex >= 2 && G.revealIndex < max - 1) {
+        btn.textContent = 'CONTINUE';
+    } else if (G.revealIndex >= max - 1) {
+        btn.textContent = 'RESOLVE';
+    } else {
+        btn.textContent = 'DRAW CARDS';
+    }
 }
 
 function revealNextCards(isTutorial = false) {
@@ -1465,15 +1504,16 @@ function revealNextCards(isTutorial = false) {
 
     if (isTutorial) renderTutorialMatch(); else renderMatch();
 
-    // Auto-draw remaining cards after first reveal
+    // Auto-draw remaining cards after first reveal (pause after 3rd card)
     if (G.revealIndex >= 0 && !G.matchOver) {
         const maxCards = Math.max(G.player.cards.length, G.opponent.cards.length);
-        if (G.revealIndex < maxCards - 1 || G.activeCurveballs.find(c => c.id === 'SUDDEN_DEATH')) {
+        // Stop auto-draw after 3rd card (index 2) to let player see all cards
+        if (G.revealIndex < 2 && G.revealIndex < maxCards - 1) {
             G.autoDrawing = true;
             setTimeout(() => {
                 G.autoDrawing = false;
                 revealNextCards(isTutorial);
-            }, 1500);
+            }, 3500);
         }
     }
 }
@@ -1624,19 +1664,22 @@ function endMatch(isTutorial = false) {
 }
 
 function showResult() {
-    document.getElementById('result-title').textContent = G.playerWon ? 'VICTORY!' : 'DEFEAT';
-    document.getElementById('result-title').className = G.playerWon ? 'green mb-8' : 'red mb-8';
-    document.getElementById('result-winnings').textContent = G.playerWon ? `Winnings: $${G.pendingWinnings.toFixed(2)}` : `Lost: ${G.currentStake.label}`;
+    // Hide combat log and draw button, show recap
+    document.getElementById('combat-log-panel').style.display = 'none';
+    document.getElementById('draw-btn-container').style.display = 'none';
+    document.getElementById('match-recap').style.display = 'block';
+
+    // Populate recap
+    document.getElementById('recap-title').textContent = G.playerWon ? 'VICTORY!' : 'DEFEAT';
+    document.getElementById('recap-title').className = G.playerWon ? 'green mb-4' : 'red mb-4';
+    document.getElementById('recap-winnings').textContent = G.playerWon ? `Winnings: $${G.pendingWinnings.toFixed(2)}` : `Lost: ${G.currentStake.label}`;
     const fee = G.pendingWinnings * 0.05;
-    document.getElementById('result-fee').textContent = G.playerWon ? `(5% fee: $${fee.toFixed(2)})` : '';
-    document.getElementById('result-player-hp').textContent = Math.max(0, G.player.hp);
-    document.getElementById('result-opponent-hp').textContent = Math.max(0, G.opponent.hp);
-    document.getElementById('result-seed').textContent = G.matchSeed;
-    document.getElementById('result-bankroll').textContent = G.bankroll.toFixed(2);
+    document.getElementById('recap-fee').textContent = G.playerWon ? `(5% fee on cash out)` : '';
+    document.getElementById('recap-player-hp').textContent = Math.max(0, G.player.hp);
+    document.getElementById('recap-opponent-hp').textContent = Math.max(0, G.opponent.hp);
+    document.getElementById('recap-seed').textContent = G.matchSeed;
 
-    document.getElementById('result-log').innerHTML = G.combatLog.slice(-12).map(e => `<div class="log-entry ${e.type}">${e.msg}</div>`).join('');
-
-    const opts = document.getElementById('result-options');
+    const opts = document.getElementById('recap-options');
     if (G.playerWon) {
         opts.innerHTML = `
             <button class="btn" onclick="cashOut()">CASH OUT</button>
@@ -1653,7 +1696,6 @@ function showResult() {
             ${G.bankroll <= 0 ? `<button class="btn primary" onclick="G.bankroll=10;showScreen('ladder')">ADD $10</button>` : ''}
         `;
     }
-    showScreen('result');
 }
 
 function cashOut() {
