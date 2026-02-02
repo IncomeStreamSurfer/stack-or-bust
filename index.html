@@ -1558,30 +1558,7 @@ function startMatch(stakeId) {
     G.player.cards = drawCards(stake.tier, 3, G.rng);
     G.opponent.cards = drawCards(stake.tier, 3, G.rng);
 
-    G.activeCurveballs = [];
-    G.glitchFlipUsed = false;
     G.transformedCards = {};
-
-    for (const cb of GAME_DATA.curveballs) {
-        if (G.rng.chance(cb.chanceByTier[stake.tier - 1])) {
-            G.activeCurveballs.push({...cb});
-        }
-    }
-
-    // Dealer's Favor
-    const df = G.activeCurveballs.find(c => c.id === 'DEALER_FAVOR');
-    if (df) {
-        const target = G.rng.chance(0.5) ? G.player : G.opponent;
-        const name = target === G.player ? 'Your' : G.opponent.name + "'s";
-        let worstIdx = 0, worstScore = scoreCard(target.cards[0]);
-        for (let i = 1; i < target.cards.length; i++) {
-            const s = scoreCard(target.cards[i]);
-            if (s < worstScore) { worstScore = s; worstIdx = i; }
-        }
-        const oldCard = target.cards[worstIdx];
-        target.cards[worstIdx] = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[stake.tier])), instanceId: `df_${Date.now()}`};
-        addLog(`DEALER'S FAVOR: ${name} ${oldCard.name} → ${target.cards[worstIdx].name}`, 'special');
-    }
 
     G.revealIndex = -1;
     G.combatLog = [];
@@ -1612,7 +1589,7 @@ function renderMatch() {
     document.getElementById('match-stake-label').textContent = `${G.currentStake.label} MATCH`;
     document.getElementById('match-seed').textContent = G.matchSeed;
     document.getElementById('opponent-name').textContent = G.opponent.name;
-    document.getElementById('curveball-indicators').textContent = G.activeCurveballs.map(c => c.name).join(' • ');
+    document.getElementById('curveball-indicators').textContent = '';
 
     renderHPBar('opponent-hp-segments', G.opponent.hp, G.opponent.maxHp);
     renderHPBar('player-hp-segments', G.player.hp, G.player.maxHp);
@@ -1647,61 +1624,11 @@ function revealNextCards(isTutorial = false, manualDraw = false) {
     G.revealIndex++;
     const idx = G.revealIndex;
 
-    // Glitch
-    if (idx === 1 && !G.glitchFlipUsed) {
-        const g = G.activeCurveballs.find(c => c.id === 'GLITCH_FLIP');
-        if (g) {
-            const all = [...G.player.cards, ...G.opponent.cards].filter((_, i) => i >= idx);
-            if (all.length) {
-                const target = G.rng.pick(all);
-                const newCard = getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[G.currentStake?.tier || 1]));
-                target.glitched = true;
-                G.transformedCards[target.instanceId] = {...newCard};
-                addLog(`!! GLITCH: ${target.name} → ${newCard.name}`, 'special');
-                G.glitchFlipUsed = true;
-            }
-        }
-    }
-
     const pc = G.player.cards[idx];
     const oc = G.opponent.cards[idx];
 
     if (!pc && !oc) {
-        // Check for draw (both alive with same HP, or both dead)
-        const isDraw = (G.player.hp > 0 && G.opponent.hp > 0 && G.player.hp === G.opponent.hp) ||
-                       (G.player.hp <= 0 && G.opponent.hp <= 0);
-
-        // Sudden Death curveball (2x damage)
-        const sd = G.activeCurveballs.find(c => c.id === 'SUDDEN_DEATH');
-        if (sd && !G.suddenDeathActive && G.player.hp > 0 && G.opponent.hp > 0) {
-            G.suddenDeathActive = true;
-            addLog('>>> SUDDEN DEATH! <<<', 'victory');
-            const tier = G.currentStake?.tier || 1;
-            const ep = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_p_${Date.now()}`};
-            const eo = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_o_${Date.now()}`};
-            G.player.cards.push(ep);
-            G.opponent.cards.push(eo);
-            addLog(`You draw: ${ep.name} (2x DMG!)`, 'special');
-            addLog(`Enemy draws: ${eo.name} (2x DMG!)`, 'special');
-            if (isTutorial) renderTutorialMatch(); else renderMatch();
-            return;
-        }
-
-        // Tiebreaker - draw extra cards until someone wins
-        if (isDraw) {
-            G.tiebreakerRound = (G.tiebreakerRound || 0) + 1;
-            addLog(`>>> TIEBREAKER ROUND ${G.tiebreakerRound}! <<<`, 'victory');
-            const tier = G.currentStake?.tier || 1;
-            const ep = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), instanceId: `tb_p_${Date.now()}`};
-            const eo = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), instanceId: `tb_o_${Date.now()}`};
-            G.player.cards.push(ep);
-            G.opponent.cards.push(eo);
-            addLog(`You draw: ${ep.name}`, 'special');
-            addLog(`Enemy draws: ${eo.name}`, 'special');
-            if (isTutorial) renderTutorialMatch(); else renderMatch();
-            return;
-        }
-
+        // All cards played - end the match
         endMatch(isTutorial);
         return;
     }
@@ -1727,17 +1654,13 @@ function revealNextCards(isTutorial = false, manualDraw = false) {
 
     if (isTutorial) renderTutorialMatch(); else renderMatch();
 
-    // Auto-draw remaining cards after first reveal (pause after 3rd card)
-    if (G.revealIndex >= 0 && !G.matchOver) {
-        const maxCards = Math.max(G.player.cards.length, G.opponent.cards.length);
-        // Stop auto-draw after 3rd card (index 2) to let player see all cards
-        if (G.revealIndex < 2 && G.revealIndex < maxCards - 1) {
-            G.autoDrawing = true;
-            G.autoDrawTimer = setTimeout(() => {
-                G.autoDrawing = false;
-                revealNextCards(isTutorial);
-            }, 3500);
-        }
+    // Auto-draw next card after delay
+    if (!G.matchOver) {
+        G.autoDrawing = true;
+        G.autoDrawTimer = setTimeout(() => {
+            G.autoDrawing = false;
+            revealNextCards(isTutorial);
+        }, 2000);
     }
 }
 
