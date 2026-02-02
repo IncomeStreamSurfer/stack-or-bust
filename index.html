@@ -517,8 +517,8 @@
         }
 
         .stake-node {
-            width: 100px;
-            padding: 12px 8px;
+            width: 72px;
+            padding: 10px 6px;
             background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
             border: 3px solid #6a3a9a;
             text-align: center;
@@ -538,12 +538,12 @@
             cursor: not-allowed;
         }
 
-        .stake-tier { font-size: 6px; color: #8866aa; margin-bottom: 4px; }
-        .stake-amount { font-size: 14px; color: #ffcc00; margin-bottom: 4px; text-shadow: 2px 2px 0 #000; }
-        .stake-mult { font-size: 7px; color: #44ff88; }
+        .stake-tier { font-size: 5px; color: #8866aa; margin-bottom: 2px; }
+        .stake-amount { font-size: 11px; color: #ffcc00; margin-bottom: 2px; text-shadow: 2px 2px 0 #000; }
+        .stake-mult { font-size: 6px; color: #44ff88; }
 
         .stake-connector {
-            width: 20px;
+            width: 10px;
             height: 4px;
             background: linear-gradient(90deg, #4a2a6a, #8855cc, #4a2a6a);
         }
@@ -1060,10 +1060,12 @@
 const GAME_DATA = {
     game: { hpStart: 10, cardsPerMatch: 3 },
     stakes: [
-        {id:"S1",label:"$1",tier:1,opponentNamePool:["PennySnake","DustDealer","OneBuckBandit"]},
-        {id:"S2",label:"$2",tier:2,opponentNamePool:["TwoBitTyrant","DoubleDownDan","ViceViper"]},
-        {id:"S5",label:"$5",tier:3,opponentNamePool:["HighRollerHex","FiveFingerFate","GoldGambit"]},
-        {id:"S10",label:"$10",tier:4,opponentNamePool:["TenfoldTalon","NeonNemesis","BlackjackWraith"]}
+        {id:"S025",label:"25¢",value:0.25,tier:1,opponentNamePool:["QuarterQuack","SmallFry","PennyPincher"]},
+        {id:"S050",label:"50¢",value:0.50,tier:1,opponentNamePool:["HalfBuck","CoinToss","NickelNinja"]},
+        {id:"S1",label:"$1",value:1,tier:1,opponentNamePool:["PennySnake","DustDealer","OneBuckBandit"]},
+        {id:"S2",label:"$2",value:2,tier:2,opponentNamePool:["TwoBitTyrant","DoubleDownDan","ViceViper"]},
+        {id:"S5",label:"$5",value:5,tier:3,opponentNamePool:["HighRollerHex","FiveFingerFate","GoldGambit"]},
+        {id:"S10",label:"$10",value:10,tier:4,opponentNamePool:["TenfoldTalon","NeonNemesis","BlackjackWraith"]}
     ],
     cards: [
         {id:"HIT",name:"Hit",rarity:"common",icon:"sword",text:"Deal 3 damage",desc:"A basic attack that deals 3 damage to your opponent.",effect:{type:"damage",amount:3}},
@@ -1342,9 +1344,9 @@ function renderTutorialMatch() {
 // Game Logic
 function startMatch(stakeId) {
     const stake = GAME_DATA.stakes.find(s => s.id === stakeId);
-    if (!stake || G.bankroll < parseInt(stake.label.replace('$', ''))) return;
+    if (!stake) return;
 
-    G.bankroll -= parseInt(stake.label.replace('$', ''));
+    G.bankroll -= stake.value;
     G.currentStake = stake;
     G.matchSeed = Math.floor(Math.random() * 2147483647);
     G.rng = new SeededRNG(G.matchSeed);
@@ -1401,10 +1403,12 @@ function startMatch(stakeId) {
 }
 
 function renderMatch() {
-    // Reset UI visibility
-    document.getElementById('combat-log-panel').style.display = 'flex';
-    document.getElementById('draw-btn-container').style.display = 'flex';
-    document.getElementById('match-recap').style.display = 'none';
+    // Only show combat log if match is still in progress
+    if (!G.matchOver) {
+        document.getElementById('combat-log-panel').style.display = 'flex';
+        document.getElementById('draw-btn-container').style.display = 'flex';
+        document.getElementById('match-recap').style.display = 'none';
+    }
 
     document.getElementById('match-stake-label').textContent = `${G.currentStake.label} MATCH`;
     document.getElementById('match-seed').textContent = G.matchSeed;
@@ -1645,7 +1649,7 @@ function endMatch(isTutorial = false) {
         if (!isTutorial) {
             const tier = G.currentStake.tier;
             const mult = GAME_DATA.payouts.winMultiplierByTier[tier];
-            const buyIn = parseInt(G.currentStake.label.replace('$', ''));
+            const buyIn = G.currentStake.value;
             G.pendingWinnings = Math.round(buyIn * mult * 100) / 100;
         }
         addLog('=== VICTORY ===', 'victory');
@@ -1689,7 +1693,7 @@ function showResult() {
             ${G.currentStake.tier < 4 ? `<div class="all-in-toggle ${G.allInMode ? 'active' : ''}" onclick="toggleAllIn()"><span class="checkbox">${G.allInMode ? '✓' : ''}</span>ALL-IN (+1 CARD)</div>` : ''}
         `;
     } else {
-        const canRetry = G.bankroll >= parseInt(G.currentStake.label.replace('$', ''));
+        const canRetry = G.bankroll >= G.currentStake.value;
         opts.innerHTML = `
             ${canRetry ? `<button class="btn" onclick="startMatch('${G.currentStake.id}')">RETRY</button>` : ''}
             <button class="btn gold" onclick="showScreen('ladder')">LADDER</button>
@@ -1733,14 +1737,13 @@ function renderLadder() {
     container.innerHTML = '';
 
     GAME_DATA.stakes.forEach((s, i) => {
-        const buyIn = parseInt(s.label.replace('$', ''));
-        const canAfford = G.bankroll >= buyIn;
+        const buyIn = s.value;
         const mult = GAME_DATA.payouts.winMultiplierByTier[s.tier];
 
         if (i > 0) container.innerHTML += '<div class="stake-connector"></div>';
 
         const node = document.createElement('div');
-        node.className = `stake-node tooltip ${canAfford ? '' : 'locked'}`;
+        node.className = `stake-node tooltip`;
         node.innerHTML = `
             <div class="stake-tier">TIER ${s.tier}</div>
             <div class="stake-amount">${s.label}</div>
@@ -1749,10 +1752,10 @@ function renderLadder() {
                 <span class="tooltip-title">${s.label} STAKE</span>
                 Buy-in: ${s.label}<br>
                 Win: $${(buyIn * mult).toFixed(2)}<br>
-                ${canAfford ? 'Click to play!' : 'Not enough funds!'}
+                Click to play!
             </span>
         `;
-        if (canAfford) node.onclick = () => startMatch(s.id);
+        node.onclick = () => startMatch(s.id);
         container.appendChild(node);
     });
 
