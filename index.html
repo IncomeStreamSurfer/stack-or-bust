@@ -1392,6 +1392,7 @@ function startMatch(stakeId) {
     G.matchOver = false;
     G.playerWon = false;
     G.suddenDeathActive = false;
+    G.tiebreakerRound = 0;
     G.lastPlayerCard = null;
     G.lastOpponentCard = null;
     G.bonusCards = 0;
@@ -1472,13 +1473,18 @@ function revealNextCards(isTutorial = false) {
     const oc = G.opponent.cards[idx];
 
     if (!pc && !oc) {
+        // Check for draw (both alive with same HP, or both dead)
+        const isDraw = (G.player.hp > 0 && G.opponent.hp > 0 && G.player.hp === G.opponent.hp) ||
+                       (G.player.hp <= 0 && G.opponent.hp <= 0);
+
+        // Sudden Death curveball (2x damage)
         const sd = G.activeCurveballs.find(c => c.id === 'SUDDEN_DEATH');
         if (sd && !G.suddenDeathActive && G.player.hp > 0 && G.opponent.hp > 0) {
             G.suddenDeathActive = true;
             addLog('>>> SUDDEN DEATH! <<<', 'victory');
             const tier = G.currentStake?.tier || 1;
-            const ep = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_p`};
-            const eo = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_o`};
+            const ep = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_p_${Date.now()}`};
+            const eo = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_o_${Date.now()}`};
             G.player.cards.push(ep);
             G.opponent.cards.push(eo);
             addLog(`You draw: ${ep.name} (2x DMG!)`, 'special');
@@ -1486,6 +1492,22 @@ function revealNextCards(isTutorial = false) {
             if (isTutorial) renderTutorialMatch(); else renderMatch();
             return;
         }
+
+        // Tiebreaker - draw extra cards until someone wins
+        if (isDraw) {
+            G.tiebreakerRound = (G.tiebreakerRound || 0) + 1;
+            addLog(`>>> TIEBREAKER ROUND ${G.tiebreakerRound}! <<<`, 'victory');
+            const tier = G.currentStake?.tier || 1;
+            const ep = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), instanceId: `tb_p_${Date.now()}`};
+            const eo = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), instanceId: `tb_o_${Date.now()}`};
+            G.player.cards.push(ep);
+            G.opponent.cards.push(eo);
+            addLog(`You draw: ${ep.name}`, 'special');
+            addLog(`Enemy draws: ${eo.name}`, 'special');
+            if (isTutorial) renderTutorialMatch(); else renderMatch();
+            return;
+        }
+
         endMatch(isTutorial);
         return;
     }
