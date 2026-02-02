@@ -1682,21 +1682,10 @@ function showResult() {
     document.getElementById('recap-seed').textContent = G.matchSeed;
 
     const opts = document.getElementById('recap-options');
-    if (G.playerWon) {
-        opts.innerHTML = `
-            <button class="btn" onclick="cashOut()">CASH OUT</button>
-            <button class="btn gold" onclick="climb()" ${G.currentStake.tier >= 4 ? 'disabled' : ''}>
-                ${G.currentStake.tier < 4 ? `CLIMB T${G.currentStake.tier + 1}` : 'MAX TIER'}
-            </button>
-        `;
-    } else {
-        const canRetry = G.bankroll >= G.currentStake.value;
-        opts.innerHTML = `
-            ${canRetry ? `<button class="btn" onclick="startMatch('${G.currentStake.id}')">RETRY</button>` : ''}
-            <button class="btn gold" onclick="showScreen('ladder')">LADDER</button>
-            ${G.bankroll <= 0 ? `<button class="btn primary" onclick="G.bankroll=10;showScreen('ladder')">ADD $10</button>` : ''}
-        `;
-    }
+    opts.innerHTML = `
+        <button class="btn primary" onclick="startMatch('${G.currentStake.id}')">PLAY AGAIN</button>
+        <button class="btn" onclick="showScreen('ladder')">LADDER</button>
+    `;
 }
 
 function cashOut() {
