@@ -1740,7 +1740,11 @@ function renderLadder() {
         const buyIn = s.value;
         const mult = GAME_DATA.payouts.winMultiplierByTier[s.tier];
 
-        if (i > 0) container.innerHTML += '<div class="stake-connector"></div>';
+        if (i > 0) {
+            const connector = document.createElement('div');
+            connector.className = 'stake-connector';
+            container.appendChild(connector);
+        }
 
         const node = document.createElement('div');
         node.className = `stake-node tooltip`;
