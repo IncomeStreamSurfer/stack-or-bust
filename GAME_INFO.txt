@@ -1,0 +1,44 @@
+STACK OR BUST v2.0
+==================
+
+A browser-playable PvP card battle casino game.
+
+LIVE URL: https://incomestreamsurfer.github.io/stack-or-bust/
+LOCAL: Open index.html in any browser
+
+HOW TO PLAY:
+- Login as guest or with Google (placeholder)
+- Select a stake: 25¢, 50¢, $1, $2, $5, or $10
+- Both players draw 3 cards
+- Cards auto-reveal with damage, heals, blocks, etc.
+- Player with most HP wins
+- If tied, extra cards are drawn until someone wins
+- Win = double your stake
+
+FEATURES:
+- Main menu with Play, Lobbies, Wallet, Friends, Profile, Ranks
+- Wallet system with deposit/withdraw
+- 150+ emoji avatars
+- Profile with nickname and stats
+- Friends list (placeholder)
+- Lobbies (placeholder)
+- Leaderboard (placeholder)
+- Google OAuth login (placeholder)
+
+CARDS:
+- Hit: Deal 3 damage
+- Block: Block next hit
+- Crit: Deal 5 damage
+- Heal: Restore 3 HP
+- Curse: Take 2 self damage
+- Drain: Deal 2, heal 2
+- Pierce: Deal 2, ignores block
+- Double: Deal 6 damage
+
+CONTROLS:
+- Click buttons or press Space/Enter to draw cards
+- Press Space/Enter on result screen to play again
+
+RECENT CHANGES:
+- Removed multipliers (simple double or nothing)
+- Added tiebreaker (extra cards if HP is equal)
