@@ -270,8 +270,7 @@
             transition: all 0.15s;
         }
         .stake-btn:hover { border-color: #ffcc00; transform: translateY(-2px); }
-        .stake-amount { font-size: 14px; color: #ffcc00; margin-bottom: 4px; }
-        .stake-mult { font-size: 7px; color: #44ff88; }
+        .stake-amount { font-size: 14px; color: #ffcc00; }
 
         /* Result */
         .result-panel { text-align: center; padding: 20px; }
@@ -364,27 +363,21 @@
             <div class="stake-grid mb-16">
                 <div class="stake-btn" onclick="startMatch(0.25)">
                     <div class="stake-amount">25¢</div>
-                    <div class="stake-mult">x1.8</div>
                 </div>
                 <div class="stake-btn" onclick="startMatch(0.50)">
                     <div class="stake-amount">50¢</div>
-                    <div class="stake-mult">x1.8</div>
                 </div>
                 <div class="stake-btn" onclick="startMatch(1)">
                     <div class="stake-amount">$1</div>
-                    <div class="stake-mult">x1.75</div>
                 </div>
                 <div class="stake-btn" onclick="startMatch(2)">
                     <div class="stake-amount">$2</div>
-                    <div class="stake-mult">x1.7</div>
                 </div>
                 <div class="stake-btn" onclick="startMatch(5)">
                     <div class="stake-amount">$5</div>
-                    <div class="stake-mult">x1.6</div>
                 </div>
                 <div class="stake-btn" onclick="startMatch(10)">
                     <div class="stake-amount">$10</div>
-                    <div class="stake-mult">x1.5</div>
                 </div>
             </div>
 
@@ -968,7 +961,7 @@ function endMatch() {
     let winnings = 0;
     if (G.playerWon) {
         G.wins++;
-        winnings = G.currentStake * 1.75;
+        winnings = G.currentStake * 2;
         G.bankroll += winnings;
         addLog('=== VICTORY ===', 'victory');
     } else {
