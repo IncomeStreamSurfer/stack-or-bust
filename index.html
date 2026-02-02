@@ -52,6 +52,7 @@
             top: 0;
             left: 0;
             flex-direction: column;
+            overflow-y: auto;
         }
 
         .screen.active {
@@ -930,7 +931,7 @@
             </div>
 
             <div class="flex justify-center" id="draw-btn-container">
-                <button class="btn primary big" id="next-btn" onclick="revealNextCards()">
+                <button class="btn primary big" id="next-btn" onclick="revealNextCards(false, true)">
                     DRAW CARDS
                 </button>
             </div>
@@ -1294,11 +1295,11 @@ function renderTutorialMatch() {
     G.player.cards.forEach((c, i) => pc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
 
     const btn = document.getElementById('tut-next-btn');
-    btn.disabled = G.autoDrawing;
+    btn.disabled = false;
     if (G.matchOver) {
         btn.textContent = 'FINISH TUTORIAL';
     } else if (G.autoDrawing) {
-        btn.textContent = 'DRAWING...';
+        btn.textContent = 'SKIP >';
     } else if (G.revealIndex >= 2) {
         btn.textContent = 'RESOLVE';
     } else {
@@ -1396,9 +1397,9 @@ function renderMatch() {
     const btn = document.getElementById('next-btn');
     const max = Math.max(G.player.cards.length, G.opponent.cards.length);
     btn.style.display = G.matchOver ? 'none' : 'block';
-    btn.disabled = G.autoDrawing;
+    btn.disabled = false;
     if (G.autoDrawing) {
-        btn.textContent = 'DRAWING...';
+        btn.textContent = 'SKIP >';
     } else if (G.revealIndex >= 2 && G.revealIndex < max - 1) {
         btn.textContent = 'CONTINUE';
     } else if (G.revealIndex >= max - 1) {
@@ -1408,8 +1409,16 @@ function renderMatch() {
     }
 }
 
-function revealNextCards(isTutorial = false) {
-    if (G.matchOver || G.autoDrawing) return;
+function revealNextCards(isTutorial = false, manualDraw = false) {
+    if (G.matchOver) return;
+
+    // If manual draw during auto-draw, cancel the timer
+    if (manualDraw && G.autoDrawing) {
+        clearTimeout(G.autoDrawTimer);
+        G.autoDrawing = false;
+    } else if (G.autoDrawing) {
+        return; // Don't allow auto-trigger while already waiting
+    }
 
     G.revealIndex++;
     const idx = G.revealIndex;
@@ -1500,7 +1509,7 @@ function revealNextCards(isTutorial = false) {
         // Stop auto-draw after 3rd card (index 2) to let player see all cards
         if (G.revealIndex < 2 && G.revealIndex < maxCards - 1) {
             G.autoDrawing = true;
-            setTimeout(() => {
+            G.autoDrawTimer = setTimeout(() => {
                 G.autoDrawing = false;
                 revealNextCards(isTutorial);
             }, 3500);
@@ -1789,10 +1798,10 @@ document.addEventListener('keydown', e => {
     if ((e.code === 'Space' || e.code === 'Enter')) {
         e.preventDefault();
 
-        // Match in progress - draw cards
-        if ((G.screen === 'match' || G.screen === 'tutorial') && !G.matchOver && !G.autoDrawing) {
+        // Match in progress - draw cards (manual draw skips auto-timer)
+        if ((G.screen === 'match' || G.screen === 'tutorial') && !G.matchOver) {
             if (G.screen === 'tutorial') tutorialNext();
-            else revealNextCards();
+            else revealNextCards(false, true);
         }
         // Match over - play again with same stake
         else if (G.screen === 'match' && G.matchOver && G.currentStake) {
