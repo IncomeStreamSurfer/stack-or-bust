@@ -662,39 +662,6 @@
             flex-wrap: wrap;
         }
 
-        .all-in-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            background: #1a0a3a;
-            border: 3px solid #6a3a9a;
-            cursor: pointer;
-            font-size: 7px;
-            color: #fff;
-            box-shadow: 3px 3px 0 #000;
-        }
-
-        .all-in-toggle.active {
-            border-color: #ff4466;
-            background: linear-gradient(180deg, #4a1a2a 0%, #3a0a1a 100%);
-        }
-
-        .checkbox {
-            width: 14px;
-            height: 14px;
-            border: 2px solid #6a3a9a;
-            background: #0a0618;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-        }
-
-        .all-in-toggle.active .checkbox {
-            background: #ff4466;
-            border-color: #ff4466;
-        }
 
         /* Tier Tabs */
         .tier-tabs {
@@ -901,12 +868,9 @@
                 </div>
             </div>
 
-            <div class="mt-auto flex justify-between items-center">
-                <div class="flex gap-8">
-                    <button class="btn" onclick="showScreen('title')">MENU</button>
-                    <button class="btn" onclick="showScreen('compendium')">CARDS</button>
-                </div>
-                <span id="bonus-indicator" class="gold" style="font-size: 8px;"></span>
+            <div class="mt-auto flex justify-center gap-8">
+                <button class="btn" onclick="showScreen('title')">MENU</button>
+                <button class="btn" onclick="showScreen('compendium')">CARDS</button>
             </div>
         </div>
 
@@ -1157,8 +1121,6 @@ const G = {
     pendingWinnings: 0,
     activeCurveballs: [],
     suddenDeathActive: false,
-    allInMode: false,
-    bonusCards: 0,
     lastPlayerCard: null,
     lastOpponentCard: null,
     glitchFlipUsed: false,
@@ -1359,7 +1321,7 @@ function startMatch(stakeId) {
     resetCombatant(G.opponent);
     G.opponent.name = G.rng.pick(stake.opponentNamePool);
 
-    G.player.cards = drawCards(stake.tier, 3 + G.bonusCards, G.rng);
+    G.player.cards = drawCards(stake.tier, 3, G.rng);
     G.opponent.cards = drawCards(stake.tier, 3, G.rng);
 
     G.activeCurveballs = [];
@@ -1395,7 +1357,6 @@ function startMatch(stakeId) {
     G.tiebreakerRound = 0;
     G.lastPlayerCard = null;
     G.lastOpponentCard = null;
-    G.bonusCards = 0;
     G.autoDrawing = false;
 
     addLog('=== MATCH START ===', 'victory');
@@ -1718,7 +1679,6 @@ function showResult() {
             <button class="btn gold" onclick="climb()" ${G.currentStake.tier >= 4 ? 'disabled' : ''}>
                 ${G.currentStake.tier < 4 ? `CLIMB T${G.currentStake.tier + 1}` : 'MAX TIER'}
             </button>
-            ${G.currentStake.tier < 4 ? `<div class="all-in-toggle ${G.allInMode ? 'active' : ''}" onclick="toggleAllIn()"><span class="checkbox">${G.allInMode ? '✓' : ''}</span>ALL-IN (+1 CARD)</div>` : ''}
         `;
     } else {
         const canRetry = G.bankroll >= G.currentStake.value;
@@ -1732,23 +1692,16 @@ function showResult() {
 
 function cashOut() {
     G.bankroll += G.pendingWinnings * 0.95;
-    G.allInMode = false;
     G.pendingWinnings = 0;
     showScreen('ladder');
 }
 
 function climb() {
     G.bankroll += G.pendingWinnings;
-    if (G.allInMode) G.bonusCards = 1;
-    G.allInMode = false;
     G.pendingWinnings = 0;
     showScreen('ladder');
 }
 
-function toggleAllIn() {
-    G.allInMode = !G.allInMode;
-    showResult();
-}
 
 function renderTitle() {
     const dc = document.getElementById('demo-cards');
@@ -1759,7 +1712,6 @@ function renderTitle() {
 
 function renderLadder() {
     document.getElementById('bankroll-display').textContent = G.bankroll.toFixed(2);
-    document.getElementById('bonus-indicator').textContent = G.bonusCards ? `+${G.bonusCards} CARDS NEXT!` : '';
 
     const container = document.getElementById('ladder-nodes');
     container.innerHTML = '';
