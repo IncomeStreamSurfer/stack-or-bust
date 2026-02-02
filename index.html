@@ -815,7 +815,7 @@
             <div class="flex justify-center gap-12">
                 <button class="btn" onclick="showScreen('deposit')">EXIT TUTORIAL</button>
                 <button class="btn primary big" id="tut-next-btn" onclick="tutorialNext()">
-                    DRAW CARDS
+                    DRAW EXTRA CARD
                 </button>
             </div>
         </div>
@@ -927,7 +927,7 @@
 
             <div class="flex justify-center mb-8" id="draw-btn-container">
                 <button class="btn primary big" id="next-btn" onclick="revealNextCards(false, true)">
-                    DRAW CARDS
+                    DRAW EXTRA CARD
                 </button>
             </div>
 
@@ -1188,7 +1188,7 @@ function startTutorial() {
 }
 
 const tutorialMessages = [
-    "Each player draws 3 cards. Click DRAW CARDS to reveal the first pair!",
+    "Each player draws 3 cards. Click DRAW EXTRA CARD to reveal the first pair!",
     "Cards resolve left to right. Your HIT deals 3 damage to the bot!",
     "The bot's HIT deals 3 damage back. You both took damage!",
     "Your BLOCK creates a shield. The bot's CURSE hurts itself!",
@@ -1299,7 +1299,7 @@ function renderTutorialMatch() {
     if (G.matchOver) {
         btn.textContent = 'DONE';
     } else {
-        btn.textContent = G.autoDrawing ? 'SKIP >' : 'DRAW';
+        btn.textContent = G.autoDrawing ? 'SKIP >' : 'DRAW EXTRA CARD';
     }
 }
 
@@ -1393,7 +1393,7 @@ function renderMatch() {
     const btn = document.getElementById('next-btn');
     btn.style.display = G.matchOver ? 'none' : 'block';
     btn.disabled = false;
-    btn.textContent = G.autoDrawing ? 'SKIP >' : 'DRAW';
+    btn.textContent = G.autoDrawing ? 'SKIP >' : 'DRAW EXTRA CARD';
 }
 
 function revealNextCards(isTutorial = false, manualDraw = false) {
