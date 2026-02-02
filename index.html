@@ -955,6 +955,25 @@ function addLog(msg, type) {
 }
 
 function endMatch() {
+    // Tie? Draw another card each
+    if (G.player.hp === G.opponent.hp && G.player.hp > 0) {
+        addLog('=== TIE! Extra card! ===', 'special');
+
+        const pc = {...weightedPick(), instanceId: 'p' + G.player.cards.length};
+        const oc = {...weightedPick(), instanceId: 'o' + G.opponent.cards.length};
+        G.player.cards.push(pc);
+        G.opponent.cards.push(oc);
+        G.revealIndex++;
+
+        resolveCard(pc, G.player, G.opponent, 'You');
+        resolveCard(oc, G.opponent, G.player, G.opponent.name);
+
+        renderMatch();
+
+        setTimeout(() => endMatch(), 1500);
+        return;
+    }
+
     G.matchOver = true;
     G.playerWon = G.player.hp > G.opponent.hp;
 
