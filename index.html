@@ -715,10 +715,215 @@
             color: #6644aa;
             padding-top: 8px;
         }
+
+        /* Wallet Bar */
+        .wallet-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 36px;
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border-bottom: 3px solid #6a3a9a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            z-index: 50;
+        }
+
+        .wallet-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wallet-balance-label {
+            font-size: 6px;
+            color: #8866aa;
+        }
+
+        .wallet-balance-amount {
+            font-size: 12px;
+            color: #44ff88;
+            text-shadow: 0 0 10px rgba(68, 255, 136, 0.5);
+        }
+
+        .wallet-btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 6px;
+            padding: 6px 10px;
+            background: linear-gradient(180deg, #4a2a7a 0%, #2a1a4a 100%);
+            border: 2px solid #8855cc;
+            color: #fff;
+            cursor: pointer;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .wallet-btn:hover {
+            background: linear-gradient(180deg, #5a3a8a 0%, #3a2a5a 100%);
+            border-color: #aa77ee;
+        }
+
+        .wallet-btn.deposit {
+            background: linear-gradient(180deg, #227744 0%, #115533 100%);
+            border-color: #44ff88;
+        }
+
+        .wallet-btn.withdraw {
+            background: linear-gradient(180deg, #774422 0%, #553311 100%);
+            border-color: #ffaa44;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 4px solid #ff66cc;
+            padding: 20px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(255, 102, 204, 0.4);
+        }
+
+        .modal-title {
+            font-size: 12px;
+            color: #ffcc00;
+            text-align: center;
+            margin-bottom: 16px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .modal-balance {
+            text-align: center;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #0a0618;
+            border: 2px solid #4a2a6a;
+        }
+
+        .modal-balance-label {
+            font-size: 7px;
+            color: #8866aa;
+            margin-bottom: 4px;
+        }
+
+        .modal-balance-amount {
+            font-size: 18px;
+            color: #44ff88;
+            text-shadow: 0 0 15px rgba(68, 255, 136, 0.5);
+        }
+
+        .modal-section {
+            margin-bottom: 16px;
+        }
+
+        .modal-section-title {
+            font-size: 8px;
+            color: #ff66cc;
+            margin-bottom: 8px;
+        }
+
+        .amount-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .amount-btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            padding: 10px 14px;
+            background: linear-gradient(180deg, #3a2a5a 0%, #2a1a4a 100%);
+            border: 2px solid #6a3a9a;
+            color: #fff;
+            cursor: pointer;
+            flex: 1;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .amount-btn:hover {
+            border-color: #ffcc00;
+            background: linear-gradient(180deg, #4a3a6a 0%, #3a2a5a 100%);
+        }
+
+        .amount-btn.deposit-btn:hover {
+            border-color: #44ff88;
+        }
+
+        .amount-btn.withdraw-btn:hover {
+            border-color: #ffaa44;
+        }
+
+        .modal-close {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .screen {
+            padding-top: 48px !important;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <!-- Wallet Bar (always visible) -->
+        <div class="wallet-bar">
+            <div class="wallet-balance">
+                <span class="wallet-balance-label">WALLET:</span>
+                <span class="wallet-balance-amount">$<span id="wallet-amount">0.00</span></span>
+            </div>
+            <div class="flex gap-4">
+                <button class="wallet-btn" onclick="openWallet()">WALLET</button>
+            </div>
+        </div>
+
+        <!-- Wallet Modal -->
+        <div class="modal-overlay" id="wallet-modal">
+            <div class="modal">
+                <div class="modal-title">MY WALLET</div>
+                <div class="modal-balance">
+                    <div class="modal-balance-label">CURRENT BALANCE</div>
+                    <div class="modal-balance-amount">$<span id="modal-wallet-amount">0.00</span></div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title">DEPOSIT FUNDS</div>
+                    <div class="amount-buttons">
+                        <button class="amount-btn deposit-btn" onclick="deposit(5)">+$5</button>
+                        <button class="amount-btn deposit-btn" onclick="deposit(10)">+$10</button>
+                        <button class="amount-btn deposit-btn" onclick="deposit(25)">+$25</button>
+                        <button class="amount-btn deposit-btn" onclick="deposit(50)">+$50</button>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title">WITHDRAW FUNDS</div>
+                    <div class="amount-buttons">
+                        <button class="amount-btn withdraw-btn" onclick="withdraw(5)">-$5</button>
+                        <button class="amount-btn withdraw-btn" onclick="withdraw(10)">-$10</button>
+                        <button class="amount-btn withdraw-btn" onclick="withdrawAll()">ALL</button>
+                    </div>
+                </div>
+                <button class="btn modal-close" onclick="closeWallet()">CLOSE</button>
+            </div>
+        </div>
+
         <!-- Deposit/Start Screen -->
         <div id="deposit-screen" class="screen active">
             <div class="flex-1 flex flex-col items-center justify-center gap-16">
@@ -1162,9 +1367,40 @@ function showScreen(id) {
 }
 
 function depositFunds() {
-    G.bankroll = 10;
+    deposit(10);
     G.deposited = true;
     showScreen('title');
+}
+
+function updateWalletDisplay() {
+    document.getElementById('wallet-amount').textContent = G.bankroll.toFixed(2);
+    document.getElementById('modal-wallet-amount').textContent = G.bankroll.toFixed(2);
+}
+
+function openWallet() {
+    updateWalletDisplay();
+    document.getElementById('wallet-modal').classList.add('active');
+}
+
+function closeWallet() {
+    document.getElementById('wallet-modal').classList.remove('active');
+}
+
+function deposit(amount) {
+    G.bankroll += amount;
+    updateWalletDisplay();
+}
+
+function withdraw(amount) {
+    if (G.bankroll >= amount) {
+        G.bankroll -= amount;
+        updateWalletDisplay();
+    }
+}
+
+function withdrawAll() {
+    G.bankroll = 0;
+    updateWalletDisplay();
 }
 
 function startTutorial() {
@@ -1309,6 +1545,7 @@ function startMatch(stakeId) {
     if (!stake) return;
 
     G.bankroll -= stake.value;
+    updateWalletDisplay();
     G.currentStake = stake;
     G.matchSeed = Math.floor(Math.random() * 2147483647);
     G.rng = new SeededRNG(G.matchSeed);
@@ -1658,15 +1895,22 @@ function showResult() {
     document.getElementById('draw-btn-container').style.display = 'none';
     document.getElementById('match-recap').style.display = 'block';
 
+    // Add winnings to wallet if won
+    if (G.playerWon && G.pendingWinnings > 0) {
+        G.bankroll += G.pendingWinnings;
+        updateWalletDisplay();
+    }
+
     // Populate recap
     document.getElementById('recap-title').textContent = G.playerWon ? 'VICTORY!' : 'DEFEAT';
     document.getElementById('recap-title').className = G.playerWon ? 'green mb-4' : 'red mb-4';
-    document.getElementById('recap-winnings').textContent = G.playerWon ? `Winnings: $${G.pendingWinnings.toFixed(2)}` : `Lost: ${G.currentStake.label}`;
-    const fee = G.pendingWinnings * 0.05;
-    document.getElementById('recap-fee').textContent = G.playerWon ? `(5% fee on cash out)` : '';
+    document.getElementById('recap-winnings').textContent = G.playerWon ? `+$${G.pendingWinnings.toFixed(2)}` : `-${G.currentStake.label}`;
+    document.getElementById('recap-fee').textContent = '';
     document.getElementById('recap-player-hp').textContent = Math.max(0, G.player.hp);
     document.getElementById('recap-opponent-hp').textContent = Math.max(0, G.opponent.hp);
     document.getElementById('recap-seed').textContent = G.matchSeed;
+
+    G.pendingWinnings = 0;
 
     const opts = document.getElementById('recap-options');
     opts.innerHTML = `
@@ -1678,12 +1922,14 @@ function showResult() {
 function cashOut() {
     G.bankroll += G.pendingWinnings * 0.95;
     G.pendingWinnings = 0;
+    updateWalletDisplay();
     showScreen('ladder');
 }
 
 function climb() {
     G.bankroll += G.pendingWinnings;
     G.pendingWinnings = 0;
+    updateWalletDisplay();
     showScreen('ladder');
 }
 
@@ -1785,6 +2031,9 @@ document.addEventListener('keydown', e => {
         }
     }
 });
+
+// Initialize wallet display
+updateWalletDisplay();
 </script>
 </body>
 </html>
