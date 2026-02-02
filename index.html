@@ -1667,7 +1667,10 @@ function dealDamage(target, amount, attacker, ignoreBlock = false) {
 
 function endMatch(isTutorial = false) {
     G.matchOver = true;
-    G.playerWon = G.opponent.hp <= 0 && G.player.hp > 0;
+
+    // Win conditions: opponent dead, or player has more HP
+    G.playerWon = (G.opponent.hp <= 0 && G.player.hp > 0) ||
+                  (G.player.hp > 0 && G.opponent.hp > 0 && G.player.hp > G.opponent.hp);
 
     if (G.playerWon) {
         G.totalWins++;
