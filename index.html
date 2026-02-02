@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STACK OR BUST</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a0a2e;
+            background-image:
+                radial-gradient(ellipse at 20% 80%, rgba(120, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255, 0, 120, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 200, 255, 0.1) 0%, transparent 70%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', monospace;
+            padding: 10px;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 880px;
+            height: calc(100vh - 20px);
+            max-height: 640px;
+            background: linear-gradient(180deg, #12082a 0%, #0a0618 100%);
+            border: 4px solid #ff00aa;
+            box-shadow:
+                0 0 0 4px #12082a,
+                0 0 0 8px #00ffcc,
+                0 0 40px rgba(255, 0, 170, 0.4),
+                0 0 80px rgba(0, 255, 204, 0.2),
+                inset 0 0 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            flex-direction: column;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Pixel Panel */
+        .panel {
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 3px solid #6a3a9a;
+            box-shadow:
+                inset 3px 3px 0 rgba(255,255,255,0.1),
+                inset -3px -3px 0 rgba(0,0,0,0.3),
+                6px 6px 0 rgba(0,0,0,0.4);
+            padding: 12px;
+            position: relative;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        .panel-title {
+            font-size: 8px;
+            color: #ff66cc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #6a3a9a;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 28px;
+            text-align: center;
+            text-shadow: 4px 4px 0 #000, 0 0 20px currentColor;
+        }
+
+        h2 {
+            font-size: 11px;
+            text-align: center;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* Colors */
+        .gold { color: #ffcc00; }
+        .pink { color: #ff66cc; }
+        .cyan { color: #00ffcc; }
+        .red { color: #ff4466; }
+        .green { color: #44ff88; }
+        .purple { color: #cc66ff; }
+        .orange { color: #ff9944; }
+        .white { color: #ffffff; }
+        .muted { color: #8866aa; }
+
+        /* Pixel Buttons */
+        .btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+            padding: 14px 20px;
+            background: linear-gradient(180deg, #4a2a7a 0%, #2a1a4a 100%);
+            border: 3px solid #8855cc;
+            color: #fff;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow:
+                inset 2px 2px 0 rgba(255,255,255,0.2),
+                inset -2px -2px 0 rgba(0,0,0,0.3),
+                4px 4px 0 #000;
+            transition: transform 0.05s, box-shadow 0.05s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        }
+
+        .btn:hover {
+            background: linear-gradient(180deg, #5a3a8a 0%, #3a2a5a 100%);
+            transform: translate(2px, 2px);
+            box-shadow:
+                inset 2px 2px 0 rgba(255,255,255,0.2),
+                inset -2px -2px 0 rgba(0,0,0,0.3),
+                2px 2px 0 #000;
+        }
+
+        .btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .btn.primary {
+            background: linear-gradient(180deg, #ff66aa 0%, #cc3388 100%);
+            border-color: #ff88cc;
+            color: #fff;
+        }
+
+        .btn.primary:hover {
+            background: linear-gradient(180deg, #ff77bb 0%, #dd4499 100%);
+        }
+
+        .btn.gold {
+            background: linear-gradient(180deg, #ffcc00 0%, #cc9900 100%);
+            border-color: #ffdd44;
+            color: #1a0a2e;
+            text-shadow: none;
+        }
+
+        .btn.gold:hover {
+            background: linear-gradient(180deg, #ffdd33 0%, #ddaa11 100%);
+        }
+
+        .btn.cyan {
+            background: linear-gradient(180deg, #00ddcc 0%, #00aa99 100%);
+            border-color: #44ffee;
+            color: #1a0a2e;
+            text-shadow: none;
+        }
+
+        .btn.big {
+            font-size: 11px;
+            padding: 18px 32px;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Cards */
+        .card {
+            width: 72px;
+            height: 100px;
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a2a 100%);
+            border: 3px solid #6a3a9a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px;
+            position: relative;
+            box-shadow: 4px 4px 0 #000;
+            cursor: default;
+        }
+
+        .card.facedown {
+            background:
+                repeating-linear-gradient(45deg, #2a1a4a, #2a1a4a 4px, #3a2a5a 4px, #3a2a5a 8px);
+        }
+
+        .card.facedown::after {
+            content: '?';
+            font-size: 28px;
+            color: #cc66ff;
+            text-shadow: 2px 2px 0 #000;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .card.highlighted {
+            border-color: #ffcc00;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.6), 4px 4px 0 #000;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 15px rgba(255, 204, 0, 0.4), 4px 4px 0 #000; }
+            to { box-shadow: 0 0 25px rgba(255, 204, 0, 0.8), 4px 4px 0 #000; }
+        }
+
+        .card.glitched {
+            border-color: #ff00aa;
+            animation: glitch 0.2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); filter: hue-rotate(0deg); }
+            25% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+            50% { transform: translate(2px, -1px); filter: hue-rotate(180deg); }
+            75% { transform: translate(-1px, -1px); filter: hue-rotate(270deg); }
+        }
+
+        .card.transformed {
+            border-color: #00ffcc;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.5), 4px 4px 0 #000;
+        }
+
+        .card-rarity {
+            width: 100%;
+            height: 4px;
+            margin-bottom: 4px;
+        }
+
+        .card-rarity.common { background: linear-gradient(90deg, #666, #888, #666); }
+        .card-rarity.uncommon { background: linear-gradient(90deg, #00aa66, #00ff99, #00aa66); }
+        .card-rarity.rare { background: linear-gradient(90deg, #cc9900, #ffcc00, #cc9900); }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+
+        .card-name {
+            font-size: 6px;
+            color: #fff;
+            text-align: center;
+            text-shadow: 1px 1px 0 #000;
+            margin-bottom: 2px;
+        }
+
+        .card-text {
+            font-size: 5px;
+            color: #aa88cc;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .card-transformed-label {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 5px;
+            color: #00ffcc;
+            white-space: nowrap;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .icon { width: 28px; height: 28px; }
+
+        /* Pixel HP Bar */
+        .hp-bar-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hp-bar-label {
+            font-size: 7px;
+            color: #ff66cc;
+            text-shadow: 1px 1px 0 #000;
+            min-width: 24px;
+        }
+
+        .hp-bar-container {
+            flex: 1;
+            height: 20px;
+            background: #0a0618;
+            border: 3px solid #4a2a6a;
+            position: relative;
+            box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5);
+        }
+
+        .hp-bar-segments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+        }
+
+        .hp-segment {
+            flex: 1;
+            margin: 2px 1px;
+            background: #333;
+            transition: background 0.2s;
+        }
+
+        .hp-segment.filled.high {
+            background: linear-gradient(180deg, #66ff99 0%, #44dd77 50%, #22bb55 100%);
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.4);
+        }
+
+        .hp-segment.filled.medium {
+            background: linear-gradient(180deg, #ffdd44 0%, #ddaa22 50%, #bb8800 100%);
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.4);
+        }
+
+        .hp-segment.filled.low {
+            background: linear-gradient(180deg, #ff6666 0%, #dd4444 50%, #bb2222 100%);
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.4);
+            animation: lowHp 0.5s infinite alternate;
+        }
+
+        @keyframes lowHp {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+
+        .hp-bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 7px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+            z-index: 1;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            z-index: 100;
+            background: linear-gradient(180deg, #3a2a5a 0%, #2a1a4a 100%);
+            border: 2px solid #ff66cc;
+            padding: 8px 10px;
+            font-size: 6px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+            line-height: 1.5;
+            min-width: 120px;
+            max-width: 180px;
+            box-shadow: 4px 4px 0 #000;
+            transition: opacity 0.2s, visibility 0.2s;
+            pointer-events: none;
+        }
+
+        .tooltip-text.top {
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tooltip-text.bottom {
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tooltip-text.left {
+            right: calc(100% + 8px);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            color: #ffcc00;
+            font-size: 7px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #6a3a9a;
+            padding-bottom: 4px;
+        }
+
+        /* Layout */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .flex-1 { flex: 1; }
+        .flex-wrap { flex-wrap: wrap; }
+        .gap-4 { gap: 4px; }
+        .gap-8 { gap: 8px; }
+        .gap-12 { gap: 12px; }
+        .gap-16 { gap: 16px; }
+        .items-center { align-items: center; }
+        .items-stretch { align-items: stretch; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-around { justify-content: space-around; }
+        .text-center { text-align: center; }
+        .mb-4 { margin-bottom: 4px; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-12 { margin-bottom: 12px; }
+        .mb-16 { margin-bottom: 16px; }
+        .mb-24 { margin-bottom: 24px; }
+        .mb-32 { margin-bottom: 32px; }
+        .mb-72 { margin-bottom: 72px; }
+        .mt-auto { margin-top: auto; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .w-full { width: 100%; }
+
+        /* Cards Row */
+        .cards-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        /* Combat Log */
+        .combat-log {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 7px;
+            line-height: 1.6;
+            padding: 8px;
+            background: #0a0618;
+            border: 2px solid #4a2a6a;
+        }
+
+        .combat-log::-webkit-scrollbar { width: 8px; }
+        .combat-log::-webkit-scrollbar-track { background: #0a0618; }
+        .combat-log::-webkit-scrollbar-thumb { background: #4a2a6a; }
+
+        .log-entry { margin-bottom: 3px; }
+        .log-entry.damage { color: #ff6666; }
+        .log-entry.heal { color: #66ff99; }
+        .log-entry.special { color: #cc66ff; }
+        .log-entry.info { color: #8866aa; }
+        .log-entry.victory { color: #ffcc00; }
+
+        /* Status Icons */
+        .status-row {
+            display: flex;
+            gap: 6px;
+            min-height: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-icon {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 6px;
+            background: #1a0a3a;
+            border: 2px solid #4a2a6a;
+            font-size: 6px;
+            color: #fff;
+        }
+
+        .status-icon svg { width: 12px; height: 12px; }
+
+        /* Stake Nodes */
+        .ladder-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stake-node {
+            width: 100px;
+            padding: 12px 8px;
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 3px solid #6a3a9a;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .stake-node:hover:not(.locked) {
+            border-color: #ffcc00;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #000, 0 0 20px rgba(255, 204, 0, 0.3);
+        }
+
+        .stake-node.locked {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .stake-tier { font-size: 6px; color: #8866aa; margin-bottom: 4px; }
+        .stake-amount { font-size: 14px; color: #ffcc00; margin-bottom: 4px; text-shadow: 2px 2px 0 #000; }
+        .stake-mult { font-size: 7px; color: #44ff88; }
+
+        .stake-connector {
+            width: 20px;
+            height: 4px;
+            background: linear-gradient(90deg, #4a2a6a, #8855cc, #4a2a6a);
+        }
+
+        /* Deposit Screen */
+        .coin-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .coin {
+            width: 48px;
+            height: 12px;
+            background: linear-gradient(180deg, #ffdd44 0%, #ccaa00 50%, #aa8800 100%);
+            border: 2px solid #ffee66;
+            border-radius: 50%;
+            box-shadow: 0 2px 0 #886600;
+        }
+
+        .deposit-option {
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 3px solid #6a3a9a;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 4px 4px 0 #000;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .deposit-option:hover {
+            border-color: #ff66cc;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #000;
+        }
+
+        .deposit-option h3 {
+            font-size: 10px;
+            color: #ffcc00;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .deposit-option p {
+            font-size: 6px;
+            color: #8866aa;
+            line-height: 1.5;
+        }
+
+        /* Combatant Section */
+        .combatant-section {
+            background: linear-gradient(180deg, #2a1a4a 0%, #1a0a3a 100%);
+            border: 3px solid #6a3a9a;
+            padding: 10px 12px;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .combatant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .combatant-name {
+            font-size: 9px;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .combatant-name.player { color: #44ff88; }
+        .combatant-name.opponent { color: #ff6666; }
+
+        /* Odds Grid */
+        .odds-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .odds-item {
+            font-size: 6px;
+            padding: 6px;
+            background: #0a0618;
+            border: 2px solid #4a2a6a;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .odds-item .name { color: #fff; }
+        .odds-item .pct { color: #44ff88; }
+
+        /* Compendium */
+        .compendium-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            justify-items: center;
+        }
+
+        .compendium-card { cursor: pointer; transition: transform 0.15s; }
+        .compendium-card:hover { transform: translateY(-4px); }
+        .compendium-card.selected .card {
+            border-color: #ffcc00;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.5), 4px 4px 0 #000;
+        }
+
+        /* Result Options */
+        .result-options {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .all-in-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #1a0a3a;
+            border: 3px solid #6a3a9a;
+            cursor: pointer;
+            font-size: 7px;
+            color: #fff;
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .all-in-toggle.active {
+            border-color: #ff4466;
+            background: linear-gradient(180deg, #4a1a2a 0%, #3a0a1a 100%);
+        }
+
+        .checkbox {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #6a3a9a;
+            background: #0a0618;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+        }
+
+        .all-in-toggle.active .checkbox {
+            background: #ff4466;
+            border-color: #ff4466;
+        }
+
+        /* Tier Tabs */
+        .tier-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .tier-tab {
+            padding: 8px 14px;
+            background: #0a0618;
+            border: 2px solid #4a2a6a;
+            font-size: 7px;
+            color: #8866aa;
+            cursor: pointer;
+        }
+
+        .tier-tab.active {
+            background: #2a1a4a;
+            border-color: #ffcc00;
+            color: #ffcc00;
+        }
+
+        /* Tutorial */
+        .tutorial-highlight {
+            animation: tutorialPulse 1s infinite;
+        }
+
+        @keyframes tutorialPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 204, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 255, 204, 0.8); }
+        }
+
+        .tutorial-message {
+            background: linear-gradient(180deg, #003344 0%, #002233 100%);
+            border: 3px solid #00ffcc;
+            padding: 12px;
+            font-size: 7px;
+            color: #00ffcc;
+            text-align: center;
+            margin-bottom: 12px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 6px;
+            color: #6644aa;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Deposit/Start Screen -->
+        <div id="deposit-screen" class="screen active">
+            <div class="flex-1 flex flex-col items-center justify-center gap-16">
+                <div class="text-center">
+                    <h1 class="mb-8"><span class="gold">STACK</span> <span class="muted">OR</span> <span class="pink">BUST</span></h1>
+                    <h2 class="cyan">INSERT COIN TO PLAY</h2>
+                </div>
+
+                <div class="coin-stack mb-8">
+                    <div class="coin" style="animation: bounce 0.6s infinite alternate;"></div>
+                    <div class="coin"></div>
+                    <div class="coin"></div>
+                </div>
+
+                <style>
+                    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+                </style>
+
+                <div class="flex gap-16 justify-center">
+                    <div class="deposit-option tooltip" onclick="startTutorial()">
+                        <h3>TUTORIAL</h3>
+                        <p>Learn how to play against a practice bot. No coins needed!</p>
+                        <span class="tooltip-text bottom">
+                            <span class="tooltip-title">FREE PRACTICE</span>
+                            Play practice matches to learn the rules before betting!
+                        </span>
+                    </div>
+
+                    <div class="deposit-option tooltip" onclick="depositFunds()">
+                        <h3>DEPOSIT $10</h3>
+                        <p>Add funds to your bankroll and start playing for real!</p>
+                        <span class="tooltip-text bottom">
+                            <span class="tooltip-title">START PLAYING</span>
+                            Get $10 in simulated currency to bet on matches!
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <span>v1.0 PROTOTYPE</span>
+                <span>SIMULATED CURRENCY ONLY</span>
+            </div>
+        </div>
+
+        <!-- Tutorial Screen -->
+        <div id="tutorial-screen" class="screen">
+            <div class="tutorial-message" id="tutorial-message">
+                Welcome to STACK OR BUST! Let's learn how to play.
+            </div>
+
+            <div class="panel mb-8" style="padding: 8px 12px;">
+                <div class="flex justify-between items-center">
+                    <span class="cyan" style="font-size: 9px;">TUTORIAL MODE</span>
+                    <span class="muted" style="font-size: 7px;">PRACTICE MATCH</span>
+                </div>
+            </div>
+
+            <div class="combatant-section mb-8">
+                <div class="combatant-header">
+                    <span class="combatant-name opponent">TRAINING BOT</span>
+                    <div class="status-row" id="tut-opponent-status"></div>
+                </div>
+                <div class="hp-bar-wrapper">
+                    <span class="hp-bar-label">HP</span>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-segments" id="tut-opponent-hp-segments"></div>
+                        <span class="hp-bar-text" id="tut-opponent-hp-text">10/10</span>
+                    </div>
+                </div>
+                <div class="cards-row" id="tut-opponent-cards"></div>
+            </div>
+
+            <div class="combatant-section mb-8">
+                <div class="combatant-header">
+                    <span class="combatant-name player">YOU (PRACTICE)</span>
+                    <div class="status-row" id="tut-player-status"></div>
+                </div>
+                <div class="hp-bar-wrapper">
+                    <span class="hp-bar-label">HP</span>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-segments" id="tut-player-hp-segments"></div>
+                        <span class="hp-bar-text" id="tut-player-hp-text">10/10</span>
+                    </div>
+                </div>
+                <div class="cards-row" id="tut-player-cards"></div>
+            </div>
+
+            <div class="panel flex-1 flex flex-col mb-8">
+                <div class="panel-title">COMBAT LOG</div>
+                <div class="combat-log flex-1" id="tut-combat-log"></div>
+            </div>
+
+            <div class="flex justify-center gap-12">
+                <button class="btn" onclick="showScreen('deposit')">EXIT TUTORIAL</button>
+                <button class="btn primary big" id="tut-next-btn" onclick="tutorialNext()">
+                    DRAW CARDS
+                </button>
+            </div>
+        </div>
+
+        <!-- Title Screen -->
+        <div id="title-screen" class="screen">
+            <div class="flex-1 flex flex-col items-center justify-center gap-12">
+                <div class="text-center">
+                    <h1 class="mb-4"><span class="gold">STACK</span> <span class="muted">OR</span> <span class="pink">BUST</span></h1>
+                    <h2 class="cyan mb-12">ROGUELIKE CARD AUTO-BATTLER</h2>
+                </div>
+
+                <div class="cards-row mb-12" id="demo-cards"></div>
+
+                <div class="flex flex-col gap-8">
+                    <button class="btn gold big" onclick="showScreen('ladder')">PLAY GAME</button>
+                    <button class="btn" onclick="showScreen('compendium')">COMPENDIUM</button>
+                </div>
+            </div>
+
+            <div class="footer">
+                <span>v1.0</span>
+                <span id="stats-display" class="gold"></span>
+            </div>
+        </div>
+
+        <!-- Ladder Screen -->
+        <div id="ladder-screen" class="screen">
+            <div class="panel mb-12">
+                <div class="flex justify-between items-center">
+                    <span class="panel-title" style="border: none; margin: 0; padding: 0;">STAKE LADDER</span>
+                    <div class="tooltip">
+                        <span class="gold" style="font-size: 11px;">$<span id="bankroll-display">10.00</span></span>
+                        <span class="tooltip-text left">
+                            <span class="tooltip-title">BANKROLL</span>
+                            Your current funds. Win matches to increase it!
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ladder-container mb-72" id="ladder-nodes"></div>
+
+            <div class="panel mb-12">
+                <div class="panel-title">TIER 1 CARD ODDS</div>
+                <div class="odds-grid mb-8" id="odds-display"></div>
+
+                <div class="flex items-center gap-8">
+                    <span class="purple" style="font-size: 7px;">CURVEBALLS:</span>
+                    <span id="curveball-odds" class="muted" style="font-size: 6px;"></span>
+                </div>
+            </div>
+
+            <div class="mt-auto flex justify-between items-center">
+                <div class="flex gap-8">
+                    <button class="btn" onclick="showScreen('title')">MENU</button>
+                    <button class="btn" onclick="showScreen('compendium')">CARDS</button>
+                </div>
+                <span id="bonus-indicator" class="gold" style="font-size: 8px;"></span>
+            </div>
+        </div>
+
+        <!-- Match Screen -->
+        <div id="match-screen" class="screen">
+            <div class="panel mb-8" style="padding: 8px 12px;">
+                <div class="flex justify-between items-center">
+                    <span class="gold" style="font-size: 9px;" id="match-stake-label">$1 MATCH</span>
+                    <span id="curveball-indicators" class="purple" style="font-size: 7px;"></span>
+                    <div class="tooltip">
+                        <span class="muted" style="font-size: 6px;">SEED: <span id="match-seed">0</span></span>
+                        <span class="tooltip-text left">
+                            <span class="tooltip-title">RNG SEED</span>
+                            This seed determines all random outcomes. Share it to replay!
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="combatant-section mb-8">
+                <div class="combatant-header">
+                    <span class="combatant-name opponent" id="opponent-name">OPPONENT</span>
+                    <div class="status-row" id="opponent-status"></div>
+                </div>
+                <div class="hp-bar-wrapper tooltip">
+                    <span class="hp-bar-label">HP</span>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-segments" id="opponent-hp-segments"></div>
+                        <span class="hp-bar-text" id="opponent-hp-text">10/10</span>
+                    </div>
+                    <span class="tooltip-text bottom">
+                        <span class="tooltip-title">HEALTH POINTS</span>
+                        When HP reaches 0, that player loses!
+                    </span>
+                </div>
+                <div class="cards-row" id="opponent-cards"></div>
+            </div>
+
+            <div class="combatant-section mb-8">
+                <div class="combatant-header">
+                    <span class="combatant-name player">YOU</span>
+                    <div class="status-row" id="player-status"></div>
+                </div>
+                <div class="hp-bar-wrapper">
+                    <span class="hp-bar-label">HP</span>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-segments" id="player-hp-segments"></div>
+                        <span class="hp-bar-text" id="player-hp-text">10/10</span>
+                    </div>
+                </div>
+                <div class="cards-row" id="player-cards"></div>
+            </div>
+
+            <div class="panel flex-1 flex flex-col mb-8">
+                <div class="panel-title">COMBAT LOG</div>
+                <div class="combat-log flex-1" id="combat-log"></div>
+            </div>
+
+            <div class="flex justify-center">
+                <button class="btn primary big" id="next-btn" onclick="revealNextCards()">
+                    DRAW CARDS
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <div class="panel text-center mb-12" id="result-header" style="padding: 20px;">
+                <h1 id="result-title" class="green mb-8">VICTORY!</h1>
+                <p class="gold" style="font-size: 10px;" id="result-winnings"></p>
+                <p class="muted" style="font-size: 7px; margin-top: 6px;" id="result-fee"></p>
+            </div>
+
+            <div class="flex gap-12 mb-12">
+                <div class="panel flex-1 text-center">
+                    <p style="font-size: 7px;" class="mb-4">YOUR HP</p>
+                    <p style="font-size: 14px;" id="result-player-hp" class="green">0</p>
+                </div>
+                <div class="panel flex-1 text-center">
+                    <p style="font-size: 7px;" class="mb-4">ENEMY HP</p>
+                    <p style="font-size: 14px;" id="result-opponent-hp" class="red">0</p>
+                </div>
+            </div>
+
+            <div class="panel flex-1 flex flex-col mb-12">
+                <div class="panel-title">MATCH RECAP</div>
+                <div class="combat-log flex-1" id="result-log"></div>
+            </div>
+
+            <div class="result-options" id="result-options"></div>
+
+            <div class="footer">
+                <span class="muted">SEED: <span id="result-seed">0</span></span>
+                <span class="gold">BANK: $<span id="result-bankroll">0</span></span>
+            </div>
+        </div>
+
+        <!-- Compendium Screen -->
+        <div id="compendium-screen" class="screen">
+            <div class="panel mb-12">
+                <div class="panel-title">CARD COMPENDIUM</div>
+            </div>
+
+            <div class="compendium-grid mb-12" id="compendium-grid"></div>
+
+            <div class="panel flex-1" id="compendium-detail">
+                <div class="flex gap-16 items-start">
+                    <div id="compendium-card-preview"></div>
+                    <div class="flex-1" id="compendium-card-info"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-auto" style="padding-top: 12px;">
+                <button class="btn" onclick="showScreen('ladder')">BACK</button>
+                <span class="muted" style="font-size: 6px;">Click cards to view details</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ================================================================================
+// STACK OR BUST - Game Engine v2
+// ================================================================================
+
+const GAME_DATA = {
+    game: { hpStart: 10, cardsPerMatch: 3 },
+    stakes: [
+        {id:"S1",label:"$1",tier:1,opponentNamePool:["PennySnake","DustDealer","OneBuckBandit"]},
+        {id:"S2",label:"$2",tier:2,opponentNamePool:["TwoBitTyrant","DoubleDownDan","ViceViper"]},
+        {id:"S5",label:"$5",tier:3,opponentNamePool:["HighRollerHex","FiveFingerFate","GoldGambit"]},
+        {id:"S10",label:"$10",tier:4,opponentNamePool:["TenfoldTalon","NeonNemesis","BlackjackWraith"]}
+    ],
+    cards: [
+        {id:"HIT",name:"Hit",rarity:"common",icon:"sword",text:"Deal 3 damage",desc:"A basic attack that deals 3 damage to your opponent.",effect:{type:"damage",amount:3}},
+        {id:"BLOCK",name:"Block",rarity:"common",icon:"shield",text:"Block next damage",desc:"Creates a shield that completely blocks the next incoming damage.",effect:{type:"block_next",amount:999}},
+        {id:"CRIT",name:"Crit",rarity:"uncommon",icon:"lightning",text:"Deal 5 damage",desc:"A powerful strike that deals 5 damage - more than a regular hit!",effect:{type:"damage",amount:5}},
+        {id:"MIRROR",name:"Mirror",rarity:"uncommon",icon:"mirror",text:"Copy foe's last",desc:"Copies and plays whatever card your opponent played last round. If no card to copy, becomes a Hit.",effect:{type:"copy_opponent_last",fallback:"HIT"}},
+        {id:"CURSE",name:"Curse",rarity:"common",icon:"skull",text:"Take 2 self damage",desc:"A bad card! You take 2 damage to yourself. Try to avoid drawing this!",effect:{type:"self_damage",amount:2}},
+        {id:"WILD",name:"Wild",rarity:"uncommon",icon:"dice",text:"Become random card",desc:"Transforms into a random other card when played. Could be great or terrible!",effect:{type:"become_random_card",exclude:["WILD"]}},
+        {id:"PIERCE",name:"Pierce",rarity:"uncommon",icon:"spear",text:"Deal 2, bypass block",desc:"Deals 2 damage that ignores shields and armor. Great against defensive plays!",effect:{type:"damage_piercing",amount:2}},
+        {id:"DRAIN",name:"Drain",rarity:"rare",icon:"fang",text:"Deal 2, heal 2",desc:"Deals 2 damage and heals you for 2 HP. Offense and defense in one!",effect:{type:"lifesteal",damage:2,heal:2}},
+        {id:"GAMBLE",name:"Gamble",rarity:"rare",icon:"coin",text:"50%: 6 dmg or 3 self",desc:"Flip a coin! Heads: deal 6 damage. Tails: take 3 self damage. High risk, high reward!",effect:{type:"coinflip_damage_or_self",winDamage:6,loseSelf:3}},
+        {id:"ARMOR",name:"Armor",rarity:"uncommon",icon:"armor",text:"Block next 2 hits",desc:"Creates heavy armor that blocks the next 2 separate attacks completely.",effect:{type:"block_hits",hits:2}},
+        {id:"REVERSAL",name:"Reversal",rarity:"rare",icon:"swirl",text:"Reflect next damage",desc:"The next damage you would take is reflected back to your opponent instead!",effect:{type:"reflect_next_damage"}},
+        {id:"BOOST",name:"Boost",rarity:"uncommon",icon:"star",text:"Next attack +2",desc:"Your next attack deals 2 extra damage. Stack with other attacks for big hits!",effect:{type:"buff_next_attack",bonus:2}}
+    ],
+    curveballs: [
+        {id:"GLITCH_FLIP",name:"Glitch",chanceByTier:[0.12,0.16,0.20,0.22],description:"One random card transforms"},
+        {id:"SUDDEN_DEATH",name:"Sudden Death",chanceByTier:[0.10,0.12,0.16,0.18],description:"Tied? Extra 2x damage round!"},
+        {id:"DEALER_FAVOR",name:"Dealer's Favor",chanceByTier:[0.10,0.12,0.14,0.16],description:"Random player rerolls worst card"}
+    ],
+    weightsByTier: {
+        1: {HIT:34,BLOCK:24,CURSE:14,CRIT:10,MIRROR:8,WILD:10,PIERCE:0,DRAIN:0,GAMBLE:0,ARMOR:0,REVERSAL:0,BOOST:0},
+        2: {HIT:26,BLOCK:18,CURSE:16,CRIT:12,MIRROR:10,WILD:10,PIERCE:4,BOOST:4,ARMOR:0,DRAIN:0,GAMBLE:0,REVERSAL:0},
+        3: {HIT:18,BLOCK:14,CURSE:18,CRIT:12,MIRROR:10,WILD:10,PIERCE:6,BOOST:6,ARMOR:4,DRAIN:2,GAMBLE:0,REVERSAL:0},
+        4: {HIT:14,BLOCK:10,CURSE:20,CRIT:12,MIRROR:10,WILD:10,PIERCE:6,BOOST:6,ARMOR:4,DRAIN:3,GAMBLE:3,REVERSAL:2}
+    },
+    payouts: { winMultiplierByTier:{1:1.75,2:1.65,3:1.55,4:1.45}, cashOutFeePercent:5 }
+};
+
+const ICONS = {
+    sword: `<svg viewBox="0 0 32 32" class="icon"><path fill="#88aacc" d="M15 2h2v16h-2z"/><path fill="#aaccee" d="M15 2h2v2h-2z"/><path fill="#556677" d="M10 17h12v2H10z"/><path fill="#8b5a2b" d="M14 19h4v10h-4z"/></svg>`,
+    shield: `<svg viewBox="0 0 32 32" class="icon"><path fill="#44ddff" d="M16 2l12 4v10c0 8-12 14-12 14S4 24 4 16V6z"/><path fill="#88eeff" d="M16 4l10 3v3L16 7z" opacity="0.5"/></svg>`,
+    lightning: `<svg viewBox="0 0 32 32" class="icon"><path fill="#ffdd44" d="M20 2l-8 12h4l-4 16 12-16h-6z"/><path fill="#fff" d="M20 2l-4 6 2-1z" opacity="0.6"/></svg>`,
+    skull: `<svg viewBox="0 0 32 32" class="icon"><ellipse fill="#eee" cx="16" cy="12" rx="10" ry="10"/><rect fill="#eee" x="10" y="18" width="12" height="8"/><ellipse fill="#222" cx="12" cy="12" rx="3" ry="3"/><ellipse fill="#222" cx="20" cy="12" rx="3" ry="3"/><ellipse fill="#ff4466" cx="12" cy="11" rx="1" ry="1"/><ellipse fill="#ff4466" cx="20" cy="11" rx="1" ry="1"/><path fill="#222" d="M13 22h2v4h-2zM17 22h2v4h-2z"/></svg>`,
+    mirror: `<svg viewBox="0 0 32 32" class="icon"><ellipse fill="#cc66ff" cx="16" cy="16" rx="12" ry="14"/><ellipse fill="#dd99ff" cx="16" cy="16" rx="9" ry="11"/><ellipse fill="#fff" cx="11" cy="10" rx="3" ry="2" opacity="0.6"/></svg>`,
+    dice: `<svg viewBox="0 0 32 32" class="icon"><rect fill="#fff" x="4" y="4" width="24" height="24" rx="3"/><circle fill="#222" cx="10" cy="10" r="2"/><circle fill="#222" cx="22" cy="10" r="2"/><circle fill="#222" cx="16" cy="16" r="2"/><circle fill="#222" cx="10" cy="22" r="2"/><circle fill="#222" cx="22" cy="22" r="2"/></svg>`,
+    coin: `<svg viewBox="0 0 32 32" class="icon"><ellipse fill="#ffcc00" cx="16" cy="16" rx="12" ry="12"/><ellipse fill="#ddaa00" cx="16" cy="16" rx="8" ry="8"/><ellipse fill="#ffcc00" cx="16" cy="16" rx="6" ry="6"/><text x="16" y="20" text-anchor="middle" fill="#aa7700" font-size="12" font-weight="bold">$</text></svg>`,
+    star: `<svg viewBox="0 0 32 32" class="icon"><path fill="#ffcc00" d="M16 2l4 10h10l-8 6 4 12-10-6-10 6 4-12-8-6h10z"/><path fill="#fff" d="M16 4l2 6-2-2z" opacity="0.5"/></svg>`,
+    spear: `<svg viewBox="0 0 32 32" class="icon"><path fill="#88aacc" d="M13 2h6l2 8-5 2-5-2z"/><path fill="#ff4466" d="M15 2h2v3h-2z"/><rect fill="#8b5a2b" x="15" y="10" width="2" height="20"/></svg>`,
+    fang: `<svg viewBox="0 0 32 32" class="icon"><path fill="#eee" d="M8 4h4l2 16-3 4-3-4z"/><path fill="#eee" d="M20 4h4l2 16-3 4-3-4z"/><path fill="#ff4466" d="M9 22l2-2v8zM21 22l2-2v8z"/></svg>`,
+    armor: `<svg viewBox="0 0 32 32" class="icon"><path fill="#44ddff" d="M6 8l10-4 10 4v12l-10 8-10-8z"/><path fill="#22aacc" d="M10 10l6-3 6 3v8l-6 6-6-6z"/><path fill="#88eeff" d="M8 9l6-3v3l-6 2z" opacity="0.4"/></svg>`,
+    swirl: `<svg viewBox="0 0 32 32" class="icon"><path fill="none" stroke="#cc66ff" stroke-width="3" d="M16 6c8 0 10 8 10 10 0 6-6 8-10 8s-8-4-8-8c0-4 4-6 8-4 2 2 0 4-2 4"/><circle fill="#fff" cx="14" cy="16" r="2"/></svg>`
+};
+
+// RNG
+class SeededRNG {
+    constructor(seed) {
+        this.state = seed || Math.floor(Math.random() * 2147483647);
+        this.seed = this.state;
+    }
+    next() {
+        let t = this.state += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+    pick(arr) { return arr[Math.floor(this.next() * arr.length)]; }
+    chance(p) { return this.next() < p; }
+    weightedPick(w) {
+        const e = Object.entries(w).filter(([,v]) => v > 0);
+        const t = e.reduce((s,[,v]) => s + v, 0);
+        let r = this.next() * t;
+        for (const [k, v] of e) { r -= v; if (r <= 0) return k; }
+        return e[0]?.[0];
+    }
+}
+
+// State
+const G = {
+    screen: 'deposit',
+    bankroll: 0,
+    deposited: false,
+    tutorialMode: false,
+    tutorialStep: 0,
+    currentStake: null,
+    matchSeed: null,
+    rng: null,
+    totalWins: 0,
+    totalLosses: 0,
+    player: { hp: 10, maxHp: 10, cards: [], shields: 0, blockHits: 0, reflectNext: false, nextAttackBonus: 0 },
+    opponent: { name: '', hp: 10, maxHp: 10, cards: [], shields: 0, blockHits: 0, reflectNext: false, nextAttackBonus: 0 },
+    revealIndex: -1,
+    combatLog: [],
+    matchOver: false,
+    playerWon: false,
+    pendingWinnings: 0,
+    activeCurveballs: [],
+    suddenDeathActive: false,
+    allInMode: false,
+    bonusCards: 0,
+    lastPlayerCard: null,
+    lastOpponentCard: null,
+    glitchFlipUsed: false,
+    transformedCards: {},
+    selectedCompendiumCard: 0,
+    autoDrawing: false
+};
+
+function getCard(id) { return GAME_DATA.cards.find(c => c.id === id); }
+
+function drawCards(tier, count, rng) {
+    const w = GAME_DATA.weightsByTier[tier];
+    return Array.from({length: count}, (_, i) => ({
+        ...getCard(rng.weightedPick(w)),
+        instanceId: `${Date.now()}_${i}_${rng.next()}`
+    }));
+}
+
+function resetCombatant(c) {
+    Object.assign(c, { hp: 10, maxHp: 10, cards: [], shields: 0, blockHits: 0, reflectNext: false, nextAttackBonus: 0 });
+}
+
+function scoreCard(c) {
+    if (c.id === 'CURSE') return -100;
+    const e = c.effect;
+    const scores = { damage: e.amount * 10, damage_piercing: e.amount * 12, lifesteal: (e.damage + e.heal) * 10, block_next: 25, block_hits: e.hits * 15, buff_next_attack: e.bonus * 8, reflect_next_damage: 30 };
+    return scores[e.type] || 15;
+}
+
+// UI
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id + '-screen').classList.add('active');
+    G.screen = id;
+    if (id === 'ladder') renderLadder();
+    if (id === 'compendium') renderCompendium();
+    if (id === 'title') renderTitle();
+}
+
+function depositFunds() {
+    G.bankroll = 10;
+    G.deposited = true;
+    showScreen('title');
+}
+
+function startTutorial() {
+    G.tutorialMode = true;
+    G.tutorialStep = 0;
+    G.matchSeed = 12345;
+    G.rng = new SeededRNG(G.matchSeed);
+    resetCombatant(G.player);
+    resetCombatant(G.opponent);
+    G.opponent.name = "TRAINING BOT";
+    G.player.cards = [getCard('HIT'), getCard('BLOCK'), getCard('WILD')].map((c,i) => ({...c, instanceId: `p${i}`}));
+    G.opponent.cards = [getCard('HIT'), getCard('CURSE'), getCard('CRIT')].map((c,i) => ({...c, instanceId: `o${i}`}));
+    G.revealIndex = -1;
+    G.combatLog = [];
+    G.matchOver = false;
+    G.transformedCards = {};
+    G.activeCurveballs = [];
+    G.autoDrawing = false;
+    showScreen('tutorial');
+    updateTutorial();
+}
+
+const tutorialMessages = [
+    "Each player draws 3 cards. Click DRAW CARDS to reveal the first pair!",
+    "Cards resolve left to right. Your HIT deals 3 damage to the bot!",
+    "The bot's HIT deals 3 damage back. You both took damage!",
+    "Your BLOCK creates a shield. The bot's CURSE hurts itself!",
+    "Your WILD transforms into a random card! Hover to see what it became!",
+    "Match over! In real games, winning pays out based on the stake multiplier."
+];
+
+function updateTutorial() {
+    document.getElementById('tutorial-message').textContent = tutorialMessages[Math.min(G.tutorialStep, tutorialMessages.length - 1)];
+    renderTutorialMatch();
+}
+
+function tutorialNext() {
+    if (G.matchOver) {
+        showScreen('deposit');
+        return;
+    }
+    revealNextCards(true);
+    G.tutorialStep++;
+    updateTutorial();
+}
+
+function createCard(card, faceDown = false, highlighted = false) {
+    const div = document.createElement('div');
+    const transformed = G.transformedCards[card.instanceId];
+    const displayCard = transformed || card;
+
+    div.className = `card tooltip ${faceDown ? 'facedown' : ''} ${highlighted ? 'highlighted' : ''} ${card.glitched ? 'glitched' : ''} ${transformed ? 'transformed' : ''}`;
+
+    if (!faceDown) {
+        div.innerHTML = `
+            <div class="card-rarity ${displayCard.rarity}"></div>
+            <div class="card-icon">${ICONS[displayCard.icon] || ''}</div>
+            <div class="card-name">${displayCard.name.toUpperCase()}</div>
+            <div class="card-text">${displayCard.text}</div>
+            ${transformed ? `<div class="card-transformed-label">WAS: ${card.name}</div>` : ''}
+            <span class="tooltip-text top">
+                <span class="tooltip-title">${displayCard.name.toUpperCase()}</span>
+                ${displayCard.desc}
+                ${transformed ? `<br><br><span style="color:#00ffcc">Transformed from ${card.name}!</span>` : ''}
+            </span>
+        `;
+    } else {
+        div.innerHTML = `
+            <span class="tooltip-text top">
+                <span class="tooltip-title">HIDDEN CARD</span>
+                This card hasn't been revealed yet!
+            </span>
+        `;
+    }
+    return div;
+}
+
+function renderHPBar(containerId, current, max) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const pct = current / max;
+    const hpClass = pct > 0.5 ? 'high' : pct > 0.25 ? 'medium' : 'low';
+
+    for (let i = 0; i < max; i++) {
+        const seg = document.createElement('div');
+        seg.className = `hp-segment ${i < current ? 'filled ' + hpClass : ''}`;
+        container.appendChild(seg);
+    }
+
+    const textEl = container.parentElement.querySelector('.hp-bar-text');
+    if (textEl) textEl.textContent = `${Math.max(0, current)}/${max}`;
+}
+
+function renderStatusIcons(id, c) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    if (c.shields > 0) el.innerHTML += `<div class="status-icon tooltip" style="color:#44ddff">${ICONS.shield}<span class="tooltip-text top"><span class="tooltip-title">SHIELD</span>Blocks the next incoming damage completely!</span></div>`;
+    if (c.blockHits > 0) el.innerHTML += `<div class="status-icon tooltip" style="color:#44ddff">${ICONS.armor} x${c.blockHits}<span class="tooltip-text top"><span class="tooltip-title">ARMOR</span>Blocks ${c.blockHits} more hit(s)!</span></div>`;
+    if (c.reflectNext) el.innerHTML += `<div class="status-icon tooltip" style="color:#cc66ff">${ICONS.swirl}<span class="tooltip-text top"><span class="tooltip-title">REFLECT</span>Next damage taken is reflected back!</span></div>`;
+    if (c.nextAttackBonus > 0) el.innerHTML += `<div class="status-icon tooltip" style="color:#ffcc00">+${c.nextAttackBonus}<span class="tooltip-text top"><span class="tooltip-title">DAMAGE BOOST</span>Next attack deals +${c.nextAttackBonus} extra damage!</span></div>`;
+}
+
+function addLog(msg, type = 'info') {
+    G.combatLog.push({ msg, type });
+    renderLog();
+}
+
+function renderLog() {
+    const el = document.getElementById(G.tutorialMode ? 'tut-combat-log' : 'combat-log');
+    if (!el) return;
+    el.innerHTML = G.combatLog.slice(-15).map(e => `<div class="log-entry ${e.type}">${e.msg}</div>`).join('');
+    el.scrollTop = el.scrollHeight;
+}
+
+function renderTutorialMatch() {
+    const prefix = 'tut-';
+    renderHPBar(prefix + 'opponent-hp-segments', G.opponent.hp, G.opponent.maxHp);
+    renderHPBar(prefix + 'player-hp-segments', G.player.hp, G.player.maxHp);
+    renderStatusIcons(prefix + 'opponent-status', G.opponent);
+    renderStatusIcons(prefix + 'player-status', G.player);
+
+    const oc = document.getElementById(prefix + 'opponent-cards');
+    const pc = document.getElementById(prefix + 'player-cards');
+    oc.innerHTML = '';
+    pc.innerHTML = '';
+
+    G.opponent.cards.forEach((c, i) => oc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
+    G.player.cards.forEach((c, i) => pc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
+
+    const btn = document.getElementById('tut-next-btn');
+    btn.disabled = G.autoDrawing;
+    if (G.matchOver) {
+        btn.textContent = 'FINISH TUTORIAL';
+    } else if (G.autoDrawing) {
+        btn.textContent = 'DRAWING...';
+    } else if (G.revealIndex >= 2) {
+        btn.textContent = 'RESOLVE';
+    } else {
+        btn.textContent = 'DRAW CARDS';
+    }
+}
+
+// Game Logic
+function startMatch(stakeId) {
+    const stake = GAME_DATA.stakes.find(s => s.id === stakeId);
+    if (!stake || G.bankroll < parseInt(stake.label.replace('$', ''))) return;
+
+    G.bankroll -= parseInt(stake.label.replace('$', ''));
+    G.currentStake = stake;
+    G.matchSeed = Math.floor(Math.random() * 2147483647);
+    G.rng = new SeededRNG(G.matchSeed);
+    G.tutorialMode = false;
+
+    resetCombatant(G.player);
+    resetCombatant(G.opponent);
+    G.opponent.name = G.rng.pick(stake.opponentNamePool);
+
+    G.player.cards = drawCards(stake.tier, 3 + G.bonusCards, G.rng);
+    G.opponent.cards = drawCards(stake.tier, 3, G.rng);
+
+    G.activeCurveballs = [];
+    G.glitchFlipUsed = false;
+    G.transformedCards = {};
+
+    for (const cb of GAME_DATA.curveballs) {
+        if (G.rng.chance(cb.chanceByTier[stake.tier - 1])) {
+            G.activeCurveballs.push({...cb});
+        }
+    }
+
+    // Dealer's Favor
+    const df = G.activeCurveballs.find(c => c.id === 'DEALER_FAVOR');
+    if (df) {
+        const target = G.rng.chance(0.5) ? G.player : G.opponent;
+        const name = target === G.player ? 'Your' : G.opponent.name + "'s";
+        let worstIdx = 0, worstScore = scoreCard(target.cards[0]);
+        for (let i = 1; i < target.cards.length; i++) {
+            const s = scoreCard(target.cards[i]);
+            if (s < worstScore) { worstScore = s; worstIdx = i; }
+        }
+        const oldCard = target.cards[worstIdx];
+        target.cards[worstIdx] = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[stake.tier])), instanceId: `df_${Date.now()}`};
+        addLog(`DEALER'S FAVOR: ${name} ${oldCard.name} → ${target.cards[worstIdx].name}`, 'special');
+    }
+
+    G.revealIndex = -1;
+    G.combatLog = [];
+    G.matchOver = false;
+    G.playerWon = false;
+    G.suddenDeathActive = false;
+    G.lastPlayerCard = null;
+    G.lastOpponentCard = null;
+    G.bonusCards = 0;
+    G.autoDrawing = false;
+
+    addLog('=== MATCH START ===', 'victory');
+    addLog(`vs ${G.opponent.name} (${stake.label})`, 'info');
+    if (G.activeCurveballs.length) addLog(`Curveballs: ${G.activeCurveballs.map(c => c.name).join(', ')}`, 'special');
+
+    showScreen('match');
+    renderMatch();
+}
+
+function renderMatch() {
+    document.getElementById('match-stake-label').textContent = `${G.currentStake.label} MATCH`;
+    document.getElementById('match-seed').textContent = G.matchSeed;
+    document.getElementById('opponent-name').textContent = G.opponent.name;
+    document.getElementById('curveball-indicators').textContent = G.activeCurveballs.map(c => c.name).join(' • ');
+
+    renderHPBar('opponent-hp-segments', G.opponent.hp, G.opponent.maxHp);
+    renderHPBar('player-hp-segments', G.player.hp, G.player.maxHp);
+    renderStatusIcons('opponent-status', G.opponent);
+    renderStatusIcons('player-status', G.player);
+
+    const oc = document.getElementById('opponent-cards');
+    const pc = document.getElementById('player-cards');
+    oc.innerHTML = '';
+    pc.innerHTML = '';
+
+    G.opponent.cards.forEach((c, i) => oc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
+    G.player.cards.forEach((c, i) => pc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
+
+    const btn = document.getElementById('next-btn');
+    const max = Math.max(G.player.cards.length, G.opponent.cards.length);
+    btn.style.display = G.matchOver ? 'none' : 'block';
+    btn.disabled = G.autoDrawing;
+    btn.textContent = G.autoDrawing ? 'DRAWING...' : (G.revealIndex >= max - 1 ? 'RESOLVE' : 'DRAW CARDS');
+}
+
+function revealNextCards(isTutorial = false) {
+    if (G.matchOver || G.autoDrawing) return;
+
+    G.revealIndex++;
+    const idx = G.revealIndex;
+
+    // Glitch
+    if (idx === 1 && !G.glitchFlipUsed) {
+        const g = G.activeCurveballs.find(c => c.id === 'GLITCH_FLIP');
+        if (g) {
+            const all = [...G.player.cards, ...G.opponent.cards].filter((_, i) => i >= idx);
+            if (all.length) {
+                const target = G.rng.pick(all);
+                const newCard = getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[G.currentStake?.tier || 1]));
+                target.glitched = true;
+                G.transformedCards[target.instanceId] = {...newCard};
+                addLog(`!! GLITCH: ${target.name} → ${newCard.name}`, 'special');
+                G.glitchFlipUsed = true;
+            }
+        }
+    }
+
+    const pc = G.player.cards[idx];
+    const oc = G.opponent.cards[idx];
+
+    if (!pc && !oc) {
+        const sd = G.activeCurveballs.find(c => c.id === 'SUDDEN_DEATH');
+        if (sd && !G.suddenDeathActive && G.player.hp > 0 && G.opponent.hp > 0) {
+            G.suddenDeathActive = true;
+            addLog('>>> SUDDEN DEATH! <<<', 'victory');
+            const tier = G.currentStake?.tier || 1;
+            const ep = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_p`};
+            const eo = {...getCard(G.rng.weightedPick(GAME_DATA.weightsByTier[tier])), suddenDeath: true, instanceId: `sd_o`};
+            G.player.cards.push(ep);
+            G.opponent.cards.push(eo);
+            addLog(`You draw: ${ep.name} (2x DMG!)`, 'special');
+            addLog(`Enemy draws: ${eo.name} (2x DMG!)`, 'special');
+            if (isTutorial) renderTutorialMatch(); else renderMatch();
+            return;
+        }
+        endMatch(isTutorial);
+        return;
+    }
+
+    addLog(`--- Round ${idx + 1} ---`, 'info');
+
+    if (pc) {
+        resolveCard(pc, G.player, G.opponent, 'You', 'player');
+        G.lastPlayerCard = pc;
+    }
+
+    if (G.opponent.hp <= 0) { endMatch(isTutorial); return; }
+
+    if (oc) {
+        resolveCard(oc, G.opponent, G.player, G.opponent.name, 'opponent');
+        G.lastOpponentCard = oc;
+    }
+
+    if (G.player.hp <= 0 || G.opponent.hp <= 0) {
+        endMatch(isTutorial);
+        return;
+    }
+
+    if (isTutorial) renderTutorialMatch(); else renderMatch();
+
+    // Auto-draw remaining cards after first reveal
+    if (G.revealIndex >= 0 && !G.matchOver) {
+        const maxCards = Math.max(G.player.cards.length, G.opponent.cards.length);
+        if (G.revealIndex < maxCards - 1 || G.activeCurveballs.find(c => c.id === 'SUDDEN_DEATH')) {
+            G.autoDrawing = true;
+            setTimeout(() => {
+                G.autoDrawing = false;
+                revealNextCards(isTutorial);
+            }, 1500);
+        }
+    }
+}
+
+function resolveCard(card, owner, target, ownerName, ownerKey) {
+    let resolved = G.transformedCards[card.instanceId] || {...card};
+
+    // Wild
+    if (resolved.effect.type === 'become_random_card') {
+        const valid = GAME_DATA.cards.filter(c => !resolved.effect.exclude.includes(c.id));
+        const newCard = G.rng.pick(valid);
+        G.transformedCards[card.instanceId] = {...newCard};
+        addLog(`${ownerName}'s Wild → ${newCard.name}!`, 'special');
+        resolved = {...newCard};
+    }
+
+    // Mirror
+    if (resolved.effect.type === 'copy_opponent_last') {
+        const last = ownerKey === 'player' ? G.lastOpponentCard : G.lastPlayerCard;
+        if (last && last.effect.type !== 'copy_opponent_last') {
+            const copied = G.transformedCards[last.instanceId] || last;
+            G.transformedCards[card.instanceId] = {...copied};
+            addLog(`${ownerName}'s Mirror copies ${copied.name}!`, 'special');
+            resolved = {...copied};
+        } else {
+            const fb = getCard(card.effect.fallback);
+            G.transformedCards[card.instanceId] = {...fb};
+            addLog(`${ownerName}'s Mirror → ${fb.name}`, 'special');
+            resolved = {...fb};
+        }
+    }
+
+    const e = resolved.effect;
+    const sd = card.suddenDeath && G.suddenDeathActive;
+    const mult = sd ? 2 : 1;
+    const ignoreBlock = sd;
+
+    addLog(`${ownerName}: ${resolved.name}`, 'info');
+
+    switch (e.type) {
+        case 'damage': {
+            let d = (e.amount + owner.nextAttackBonus) * mult;
+            owner.nextAttackBonus = 0;
+            if (sd) addLog('  (2x SUDDEN DEATH)', 'special');
+            dealDamage(target, d, owner, ignoreBlock);
+            break;
+        }
+        case 'damage_piercing': {
+            let d = (e.amount + owner.nextAttackBonus) * mult;
+            owner.nextAttackBonus = 0;
+            addLog('  PIERCING!', 'special');
+            dealDamage(target, d, owner, true);
+            break;
+        }
+        case 'self_damage':
+            owner.hp -= e.amount;
+            addLog(`  Self-damage: ${e.amount} (HP: ${owner.hp})`, 'damage');
+            break;
+        case 'block_next':
+            owner.shields = e.amount;
+            addLog('  Shield UP!', 'heal');
+            break;
+        case 'block_hits':
+            owner.blockHits += e.hits;
+            addLog(`  Armor UP (${owner.blockHits} hits)`, 'heal');
+            break;
+        case 'lifesteal': {
+            let d = (e.damage + owner.nextAttackBonus) * mult;
+            owner.nextAttackBonus = 0;
+            const dealt = dealDamage(target, d, owner, ignoreBlock);
+            if (dealt > 0) {
+                const heal = Math.min(e.heal, owner.maxHp - owner.hp);
+                owner.hp += heal;
+                addLog(`  Drains ${heal}! (HP: ${owner.hp})`, 'heal');
+            }
+            break;
+        }
+        case 'buff_next_attack':
+            owner.nextAttackBonus += e.bonus;
+            addLog(`  Next attack +${e.bonus}`, 'special');
+            break;
+        case 'reflect_next_damage':
+            owner.reflectNext = true;
+            addLog('  REFLECT ready!', 'special');
+            break;
+        case 'coinflip_damage_or_self':
+            if (G.rng.chance(0.5)) {
+                let d = (e.winDamage + owner.nextAttackBonus) * mult;
+                owner.nextAttackBonus = 0;
+                addLog('  GAMBLE WIN!', 'victory');
+                dealDamage(target, d, owner, ignoreBlock);
+            } else {
+                addLog('  GAMBLE LOSE!', 'damage');
+                owner.hp -= e.loseSelf;
+                addLog(`  Self-damage: ${e.loseSelf} (HP: ${owner.hp})`, 'damage');
+            }
+            break;
+    }
+}
+
+function dealDamage(target, amount, attacker, ignoreBlock = false) {
+    if (target.reflectNext && !ignoreBlock) {
+        target.reflectNext = false;
+        attacker.hp -= amount;
+        addLog(`  REFLECTED! ${amount} back!`, 'special');
+        return 0;
+    }
+    if (target.blockHits > 0 && !ignoreBlock) {
+        target.blockHits--;
+        addLog(`  ARMOR absorbs! (${target.blockHits} left)`, 'heal');
+        return 0;
+    }
+    if (target.shields > 0 && !ignoreBlock) {
+        target.shields = 0;
+        addLog('  SHIELD blocks!', 'heal');
+        return 0;
+    }
+    target.hp -= amount;
+    addLog(`  ${amount} damage! (HP: ${target.hp})`, 'damage');
+    return amount;
+}
+
+function endMatch(isTutorial = false) {
+    G.matchOver = true;
+    G.playerWon = G.opponent.hp <= 0 && G.player.hp > 0;
+
+    if (G.playerWon) {
+        G.totalWins++;
+        if (!isTutorial) {
+            const tier = G.currentStake.tier;
+            const mult = GAME_DATA.payouts.winMultiplierByTier[tier];
+            const buyIn = parseInt(G.currentStake.label.replace('$', ''));
+            G.pendingWinnings = Math.round(buyIn * mult * 100) / 100;
+        }
+        addLog('=== VICTORY ===', 'victory');
+    } else {
+        G.totalLosses++;
+        G.pendingWinnings = 0;
+        addLog('=== DEFEAT ===', 'damage');
+    }
+
+    if (isTutorial) {
+        renderTutorialMatch();
+    } else {
+        renderMatch();
+        setTimeout(showResult, 500);
+    }
+}
+
+function showResult() {
+    document.getElementById('result-title').textContent = G.playerWon ? 'VICTORY!' : 'DEFEAT';
+    document.getElementById('result-title').className = G.playerWon ? 'green mb-8' : 'red mb-8';
+    document.getElementById('result-winnings').textContent = G.playerWon ? `Winnings: $${G.pendingWinnings.toFixed(2)}` : `Lost: ${G.currentStake.label}`;
+    const fee = G.pendingWinnings * 0.05;
+    document.getElementById('result-fee').textContent = G.playerWon ? `(5% fee: $${fee.toFixed(2)})` : '';
+    document.getElementById('result-player-hp').textContent = Math.max(0, G.player.hp);
+    document.getElementById('result-opponent-hp').textContent = Math.max(0, G.opponent.hp);
+    document.getElementById('result-seed').textContent = G.matchSeed;
+    document.getElementById('result-bankroll').textContent = G.bankroll.toFixed(2);
+
+    document.getElementById('result-log').innerHTML = G.combatLog.slice(-12).map(e => `<div class="log-entry ${e.type}">${e.msg}</div>`).join('');
+
+    const opts = document.getElementById('result-options');
+    if (G.playerWon) {
+        opts.innerHTML = `
+            <button class="btn" onclick="cashOut()">CASH OUT</button>
+            <button class="btn gold" onclick="climb()" ${G.currentStake.tier >= 4 ? 'disabled' : ''}>
+                ${G.currentStake.tier < 4 ? `CLIMB T${G.currentStake.tier + 1}` : 'MAX TIER'}
+            </button>
+            ${G.currentStake.tier < 4 ? `<div class="all-in-toggle ${G.allInMode ? 'active' : ''}" onclick="toggleAllIn()"><span class="checkbox">${G.allInMode ? '✓' : ''}</span>ALL-IN (+1 CARD)</div>` : ''}
+        `;
+    } else {
+        const canRetry = G.bankroll >= parseInt(G.currentStake.label.replace('$', ''));
+        opts.innerHTML = `
+            ${canRetry ? `<button class="btn" onclick="startMatch('${G.currentStake.id}')">RETRY</button>` : ''}
+            <button class="btn gold" onclick="showScreen('ladder')">LADDER</button>
+            ${G.bankroll <= 0 ? `<button class="btn primary" onclick="G.bankroll=10;showScreen('ladder')">ADD $10</button>` : ''}
+        `;
+    }
+    showScreen('result');
+}
+
+function cashOut() {
+    G.bankroll += G.pendingWinnings * 0.95;
+    G.allInMode = false;
+    G.pendingWinnings = 0;
+    showScreen('ladder');
+}
+
+function climb() {
+    G.bankroll += G.pendingWinnings;
+    if (G.allInMode) G.bonusCards = 1;
+    G.allInMode = false;
+    G.pendingWinnings = 0;
+    showScreen('ladder');
+}
+
+function toggleAllIn() {
+    G.allInMode = !G.allInMode;
+    showResult();
+}
+
+function renderTitle() {
+    const dc = document.getElementById('demo-cards');
+    dc.innerHTML = '';
+    ['HIT', 'CRIT', 'BLOCK'].forEach(id => dc.appendChild(createCard(getCard(id))));
+    document.getElementById('stats-display').textContent = (G.totalWins || G.totalLosses) ? `W:${G.totalWins} L:${G.totalLosses}` : '';
+}
+
+function renderLadder() {
+    document.getElementById('bankroll-display').textContent = G.bankroll.toFixed(2);
+    document.getElementById('bonus-indicator').textContent = G.bonusCards ? `+${G.bonusCards} CARDS NEXT!` : '';
+
+    const container = document.getElementById('ladder-nodes');
+    container.innerHTML = '';
+
+    GAME_DATA.stakes.forEach((s, i) => {
+        const buyIn = parseInt(s.label.replace('$', ''));
+        const canAfford = G.bankroll >= buyIn;
+        const mult = GAME_DATA.payouts.winMultiplierByTier[s.tier];
+
+        if (i > 0) container.innerHTML += '<div class="stake-connector"></div>';
+
+        const node = document.createElement('div');
+        node.className = `stake-node tooltip ${canAfford ? '' : 'locked'}`;
+        node.innerHTML = `
+            <div class="stake-tier">TIER ${s.tier}</div>
+            <div class="stake-amount">${s.label}</div>
+            <div class="stake-mult">x${mult}</div>
+            <span class="tooltip-text bottom">
+                <span class="tooltip-title">${s.label} STAKE</span>
+                Buy-in: ${s.label}<br>
+                Win: $${(buyIn * mult).toFixed(2)}<br>
+                ${canAfford ? 'Click to play!' : 'Not enough funds!'}
+            </span>
+        `;
+        if (canAfford) node.onclick = () => startMatch(s.id);
+        container.appendChild(node);
+    });
+
+    const w = GAME_DATA.weightsByTier[1];
+    const t = Object.values(w).reduce((a,b) => a+b, 0);
+    document.getElementById('odds-display').innerHTML = Object.entries(w).filter(([,v]) => v > 0)
+        .map(([id, v]) => `<div class="odds-item"><span class="name">${getCard(id).name}</span><span class="pct">${((v/t)*100).toFixed(0)}%</span></div>`).join('');
+
+    document.getElementById('curveball-odds').textContent = GAME_DATA.curveballs.map(c => `${c.name}: ${(c.chanceByTier[0]*100).toFixed(0)}%`).join(' • ');
+}
+
+function renderCompendium() {
+    const grid = document.getElementById('compendium-grid');
+    grid.innerHTML = '';
+
+    GAME_DATA.cards.forEach((c, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = `compendium-card ${i === G.selectedCompendiumCard ? 'selected' : ''}`;
+        wrap.appendChild(createCard(c));
+        wrap.onclick = () => { G.selectedCompendiumCard = i; renderCompendium(); };
+        grid.appendChild(wrap);
+    });
+
+    const card = GAME_DATA.cards[G.selectedCompendiumCard];
+    document.getElementById('compendium-card-preview').innerHTML = '';
+    document.getElementById('compendium-card-preview').appendChild(createCard(card));
+
+    const tiers = [];
+    for (let t = 1; t <= 4; t++) {
+        const w = GAME_DATA.weightsByTier[t][card.id];
+        if (w > 0) {
+            const total = Object.values(GAME_DATA.weightsByTier[t]).reduce((a,b) => a+b, 0);
+            tiers.push(`T${t}: ${((w/total)*100).toFixed(0)}%`);
+        }
+    }
+
+    document.getElementById('compendium-card-info').innerHTML = `
+        <h3 style="font-size:11px;color:#ffcc00;margin-bottom:8px;">${card.name}</h3>
+        <p class="${card.rarity}" style="font-size:7px;margin-bottom:6px;">RARITY: ${card.rarity.toUpperCase()}</p>
+        <p class="white" style="font-size:7px;margin-bottom:6px;line-height:1.5;">${card.desc}</p>
+        <p class="muted" style="font-size:6px;margin-bottom:6px;">TYPE: ${card.effect.type}</p>
+        <p class="green" style="font-size:6px;">AVAILABLE: ${tiers.join(' | ') || 'None'}</p>
+    `;
+}
+
+document.addEventListener('keydown', e => {
+    if ((G.screen === 'match' || G.screen === 'tutorial') && !G.matchOver && (e.code === 'Space' || e.code === 'Enter')) {
+        e.preventDefault();
+        if (G.screen === 'tutorial') tutorialNext();
+        else revealNextCards();
+    }
+});
+</script>
+</body>
+</html>
