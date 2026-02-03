@@ -13,11 +13,33 @@ const io = new Server(server, {
 app.use(express.static(path.join(__dirname)));
 
 // Game state
-const lobbies = new Map();
 const players = new Map();
 const matches = new Map();
+const matchmakingQueues = new Map(); // stake -> [player ids]
+const rematchWaiting = new Map(); // matchId -> [player ids waiting]
+const lobbies = new Map(); // code -> lobby
 
-// Card definitions (same as client)
+// Generate unique lobby code
+function generateLobbyCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return lobbies.has(code) ? generateLobbyCode() : code;
+}
+
+function broadcastLobbyList() {
+    const lobbyList = Array.from(lobbies.values()).map(l => ({
+        code: l.code,
+        host: l.host.name,
+        stake: l.stake,
+        players: l.players.length
+    }));
+    io.emit('lobbyList', lobbyList);
+}
+
+// Card definitions
 const CARDS = [
     {id:'HIT', name:'Hit', rarity:'common', icon:'⚔️', text:'Deal 3 damage', effect:{type:'damage', amount:3}},
     {id:'BLOCK', name:'Block', rarity:'common', icon:'🛡️', text:'Block next hit', effect:{type:'block'}},
@@ -30,6 +52,7 @@ const CARDS = [
 ];
 
 const WEIGHTS = {HIT:30, BLOCK:25, CURSE:15, CRIT:12, HEAL:8, PIERCE:5, DRAIN:3, DOUBLE:2};
+const CARD_REVEAL_DELAY = 3000; // 3 seconds between cards (50% slower)
 
 // Seeded RNG
 function createRNG(seed) {
@@ -50,23 +73,13 @@ function weightedPick(rng) {
     return {...CARDS[0]};
 }
 
-// Generate unique lobby code
-function generateLobbyCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 4; i++) {
-        code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-}
-
 // Create a new match
 function createMatch(player1, player2, stake) {
     const seed = Date.now();
     const rng = createRNG(seed);
 
     const match = {
-        id: `match_${Date.now()}`,
+        id: `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         seed,
         stake,
         players: {
@@ -93,7 +106,8 @@ function createMatch(player1, player2, stake) {
         revealIndex: -1,
         matchOver: false,
         winner: null,
-        combatLog: []
+        combatLog: [],
+        autoDrawTimer: null
     };
 
     // Deal 3 cards to each player
@@ -154,13 +168,15 @@ function resolveCard(card, owner, target, match) {
     return log;
 }
 
-// Process next round
+// Process next round (called automatically)
 function processRound(match) {
+    if (match.matchOver) return;
+
     match.revealIndex++;
     const idx = match.revealIndex;
 
+    // Check if we need tiebreaker
     if (idx >= match.players[match.playerOrder[0]].cards.length) {
-        // Check for tie
         const p1 = match.players[match.playerOrder[0]];
         const p2 = match.players[match.playerOrder[1]];
 
@@ -173,19 +189,24 @@ function processRound(match) {
             p1.cards.push(card1);
             p2.cards.push(card2);
 
-            // Resolve tiebreaker cards immediately
+            // Resolve tiebreaker cards
             match.combatLog.push(...resolveCard(card1, p1, p2, match));
             match.combatLog.push(...resolveCard(card2, p2, p1, match));
 
-            // Check again
-            if (p1.hp !== p2.hp || p1.hp <= 0 || p2.hp <= 0) {
+            broadcastMatchState(match);
+
+            // Check if still tied
+            if (p1.hp === p2.hp && p1.hp > 0) {
+                // Still tied, schedule another tiebreaker
+                match.autoDrawTimer = setTimeout(() => processRound(match), CARD_REVEAL_DELAY);
+            } else {
                 endMatch(match);
             }
-            return match;
+            return;
         }
 
         endMatch(match);
-        return match;
+        return;
     }
 
     const p1 = match.players[match.playerOrder[0]];
@@ -198,34 +219,37 @@ function processRound(match) {
     match.combatLog.push(...resolveCard(card1, p1, p2, match));
 
     if (p2.hp <= 0) {
+        broadcastMatchState(match);
         endMatch(match);
-        return match;
+        return;
     }
 
     // Player 2's card
     const card2 = p2.cards[idx];
     match.combatLog.push(...resolveCard(card2, p2, p1, match));
 
+    broadcastMatchState(match);
+
     if (p1.hp <= 0) {
         endMatch(match);
-        return match;
+        return;
     }
 
-    // Auto-end after 3 cards
-    if (idx === 2) {
-        // Will trigger tie check on next process
-        setTimeout(() => {
-            if (!match.matchOver) {
-                processRound(match);
-                broadcastMatchState(match);
-            }
-        }, 1500);
-    }
+    // Schedule next round automatically
+    match.autoDrawTimer = setTimeout(() => processRound(match), CARD_REVEAL_DELAY);
+}
 
-    return match;
+// Start auto-draw for a match
+function startAutoDraw(match) {
+    // Initial delay before first card
+    match.autoDrawTimer = setTimeout(() => processRound(match), 1500);
 }
 
 function endMatch(match) {
+    if (match.autoDrawTimer) {
+        clearTimeout(match.autoDrawTimer);
+    }
+
     match.matchOver = true;
     const p1 = match.players[match.playerOrder[0]];
     const p2 = match.players[match.playerOrder[1]];
@@ -239,13 +263,14 @@ function endMatch(match) {
     } else {
         match.combatLog.push({msg: '=== DRAW! ===', type: 'info'});
     }
+
+    broadcastMatchState(match);
 }
 
 function broadcastMatchState(match) {
     const p1Id = match.playerOrder[0];
     const p2Id = match.playerOrder[1];
 
-    // Send state to both players
     io.to(p1Id).emit('matchUpdate', {
         match: sanitizeMatch(match, p1Id),
         yourId: p1Id
@@ -257,13 +282,12 @@ function broadcastMatchState(match) {
 }
 
 function sanitizeMatch(match, forPlayerId) {
-    // Hide unrevealed cards from opponent
     const sanitized = JSON.parse(JSON.stringify(match));
     delete sanitized.rng;
+    delete sanitized.autoDrawTimer;
 
     for (const playerId of match.playerOrder) {
         if (playerId !== forPlayerId) {
-            // Hide unrevealed opponent cards
             sanitized.players[playerId].cards = sanitized.players[playerId].cards.map((card, i) => {
                 if (i > match.revealIndex) {
                     return { hidden: true, instanceId: card.instanceId };
@@ -276,27 +300,86 @@ function sanitizeMatch(match, forPlayerId) {
     return sanitized;
 }
 
+// Try to match players in queue
+function tryMatchmaking(stake) {
+    const queue = matchmakingQueues.get(stake) || [];
+    if (queue.length >= 2) {
+        const p1Id = queue.shift();
+        const p2Id = queue.shift();
+        matchmakingQueues.set(stake, queue);
+
+        const p1 = players.get(p1Id);
+        const p2 = players.get(p2Id);
+
+        if (!p1 || !p2) {
+            // One player disconnected, put the other back
+            if (p1) queue.unshift(p1Id);
+            if (p2) queue.unshift(p2Id);
+            matchmakingQueues.set(stake, queue);
+            return;
+        }
+
+        // Create match
+        const match = createMatch(p1, p2, stake);
+        matches.set(match.id, match);
+
+        p1.currentMatch = match.id;
+        p2.currentMatch = match.id;
+        p1.inQueue = false;
+        p2.inQueue = false;
+
+        console.log(`Match found! ${p1.name} vs ${p2.name} at $${stake}`);
+
+        // Notify both players
+        io.to(p1Id).emit('matchFound', {
+            matchId: match.id,
+            opponent: { name: p2.name, avatar: p2.avatar },
+            stake
+        });
+        io.to(p2Id).emit('matchFound', {
+            matchId: match.id,
+            opponent: { name: p1.name, avatar: p1.avatar },
+            stake
+        });
+
+        // Start the match after a brief delay
+        setTimeout(() => {
+            io.to(p1Id).emit('matchStart', {
+                matchId: match.id,
+                players: [p1, p2].map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
+                stake
+            });
+            io.to(p2Id).emit('matchStart', {
+                matchId: match.id,
+                players: [p1, p2].map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
+                stake
+            });
+
+            // Send initial state and start auto-draw
+            setTimeout(() => {
+                broadcastMatchState(match);
+                startAutoDraw(match);
+            }, 500);
+        }, 1000);
+    }
+}
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
-    // Player joins with their info
     socket.on('register', (data) => {
         players.set(socket.id, {
             id: socket.id,
             name: data.name || 'Guest',
             avatar: data.avatar || 'rabbit',
-            bankroll: data.bankroll || 10
+            bankroll: data.bankroll || 10,
+            inQueue: false,
+            currentMatch: null
         });
         socket.emit('registered', { playerId: socket.id });
-
-        // Send lobby list
-        socket.emit('lobbyList', Array.from(lobbies.values()).map(l => ({
-            code: l.code,
-            host: l.host.name,
-            stake: l.stake,
-            players: l.players.length
-        })));
+        broadcastLobbyList();
+        console.log(`Registered: ${data.name || 'Guest'}`);
     });
 
     // Create a lobby
@@ -305,10 +388,11 @@ io.on('connection', (socket) => {
         if (!player) return;
 
         const code = generateLobbyCode();
+        const stake = data.stake || 1;
         const lobby = {
             code,
             host: player,
-            stake: data.stake || 1,
+            stake,
             players: [player],
             created: Date.now()
         };
@@ -316,15 +400,9 @@ io.on('connection', (socket) => {
         lobbies.set(code, lobby);
         socket.join(`lobby_${code}`);
 
-        socket.emit('lobbyCreated', { code, lobby });
-        io.emit('lobbyList', Array.from(lobbies.values()).map(l => ({
-            code: l.code,
-            host: l.host.name,
-            stake: l.stake,
-            players: l.players.length
-        })));
-
-        console.log(`Lobby created: ${code} by ${player.name}`);
+        socket.emit('lobbyCreated', { code, lobby: { stake } });
+        broadcastLobbyList();
+        console.log(`Lobby created: ${code} by ${player.name} ($${stake})`);
     });
 
     // Join a lobby
@@ -358,9 +436,9 @@ io.on('connection', (socket) => {
             const match = createMatch(lobby.players[0], lobby.players[1], lobby.stake);
             matches.set(match.id, match);
 
-            // Store match reference on players
             lobby.players.forEach(p => {
-                players.get(p.id).currentMatch = match.id;
+                const pl = players.get(p.id);
+                if (pl) pl.currentMatch = match.id;
             });
 
             io.to(`lobby_${lobby.code}`).emit('matchStart', {
@@ -369,70 +447,15 @@ io.on('connection', (socket) => {
                 stake: lobby.stake
             });
 
-            // Send initial match state
-            setTimeout(() => broadcastMatchState(match), 500);
+            setTimeout(() => {
+                broadcastMatchState(match);
+                startAutoDraw(match);
+            }, 500);
 
-            // Remove lobby
             lobbies.delete(lobby.code);
-            io.emit('lobbyList', Array.from(lobbies.values()).map(l => ({
-                code: l.code,
-                host: l.host.name,
-                stake: l.stake,
-                players: l.players.length
-            })));
-
-            console.log(`Match started: ${match.id}`);
+            broadcastLobbyList();
+            console.log(`Match started from lobby ${lobby.code}`);
         }
-    });
-
-    // Draw card / advance round
-    socket.on('drawCard', () => {
-        const player = players.get(socket.id);
-        if (!player || !player.currentMatch) return;
-
-        const match = matches.get(player.currentMatch);
-        if (!match || match.matchOver) return;
-
-        processRound(match);
-        broadcastMatchState(match);
-    });
-
-    // Play again request
-    socket.on('playAgain', () => {
-        const player = players.get(socket.id);
-        if (!player || !player.currentMatch) return;
-
-        const oldMatch = matches.get(player.currentMatch);
-        if (!oldMatch || !oldMatch.matchOver) return;
-
-        // Create new match with same players
-        const p1 = players.get(oldMatch.playerOrder[0]);
-        const p2 = players.get(oldMatch.playerOrder[1]);
-
-        if (!p1 || !p2) return;
-
-        const newMatch = createMatch(p1, p2, oldMatch.stake);
-        matches.set(newMatch.id, newMatch);
-
-        p1.currentMatch = newMatch.id;
-        p2.currentMatch = newMatch.id;
-
-        // Notify both players
-        io.to(p1.id).emit('matchStart', {
-            matchId: newMatch.id,
-            players: [p1, p2].map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
-            stake: newMatch.stake
-        });
-        io.to(p2.id).emit('matchStart', {
-            matchId: newMatch.id,
-            players: [p1, p2].map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
-            stake: newMatch.stake
-        });
-
-        setTimeout(() => broadcastMatchState(newMatch), 500);
-
-        // Clean up old match
-        matches.delete(oldMatch.id);
     });
 
     // Leave lobby
@@ -451,14 +474,141 @@ io.on('connection', (socket) => {
                     stake: lobby.stake
                 });
             }
-
-            io.emit('lobbyList', Array.from(lobbies.values()).map(l => ({
-                code: l.code,
-                host: l.host.name,
-                stake: l.stake,
-                players: l.players.length
-            })));
+            broadcastLobbyList();
         }
+    });
+
+    // Find Match - join matchmaking queue
+    socket.on('findMatch', (data) => {
+        const player = players.get(socket.id);
+        if (!player) return;
+
+        const stake = data.stake || 1;
+
+        // Remove from any existing queue
+        matchmakingQueues.forEach((queue, s) => {
+            const idx = queue.indexOf(socket.id);
+            if (idx !== -1) queue.splice(idx, 1);
+        });
+
+        // Add to queue for this stake
+        if (!matchmakingQueues.has(stake)) {
+            matchmakingQueues.set(stake, []);
+        }
+        matchmakingQueues.get(stake).push(socket.id);
+        player.inQueue = true;
+
+        socket.emit('searching', { stake });
+        console.log(`${player.name} searching for $${stake} match...`);
+
+        // Try to find a match
+        tryMatchmaking(stake);
+    });
+
+    // Cancel matchmaking
+    socket.on('cancelSearch', () => {
+        const player = players.get(socket.id);
+        if (!player) return;
+
+        matchmakingQueues.forEach((queue) => {
+            const idx = queue.indexOf(socket.id);
+            if (idx !== -1) queue.splice(idx, 1);
+        });
+        player.inQueue = false;
+
+        socket.emit('searchCancelled');
+        console.log(`${player.name} cancelled search`);
+    });
+
+    // Play again request
+    socket.on('playAgain', () => {
+        const player = players.get(socket.id);
+        if (!player || !player.currentMatch) return;
+
+        const oldMatch = matches.get(player.currentMatch);
+        if (!oldMatch || !oldMatch.matchOver) return;
+
+        const matchId = oldMatch.id;
+
+        // Initialize waiting list for this match
+        if (!rematchWaiting.has(matchId)) {
+            rematchWaiting.set(matchId, []);
+        }
+
+        const waiting = rematchWaiting.get(matchId);
+
+        // Check if already waiting
+        if (waiting.includes(socket.id)) return;
+
+        waiting.push(socket.id);
+        socket.emit('waitingForOpponent');
+        console.log(`${player.name} wants rematch, waiting...`);
+
+        // Check if both players want rematch
+        const opponentId = oldMatch.playerOrder.find(id => id !== socket.id);
+        if (waiting.includes(opponentId)) {
+            // Both ready! Create new match
+            const p1 = players.get(oldMatch.playerOrder[0]);
+            const p2 = players.get(oldMatch.playerOrder[1]);
+
+            if (!p1 || !p2) {
+                socket.emit('opponentDisconnected');
+                return;
+            }
+
+            const newMatch = createMatch(p1, p2, oldMatch.stake);
+            matches.set(newMatch.id, newMatch);
+
+            p1.currentMatch = newMatch.id;
+            p2.currentMatch = newMatch.id;
+
+            // Clean up
+            rematchWaiting.delete(matchId);
+            matches.delete(matchId);
+
+            console.log(`Rematch starting: ${p1.name} vs ${p2.name}`);
+
+            // Notify both players
+            io.to(p1.id).emit('matchStart', {
+                matchId: newMatch.id,
+                players: [p1, p2].map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
+                stake: newMatch.stake
+            });
+            io.to(p2.id).emit('matchStart', {
+                matchId: newMatch.id,
+                players: [p1, p2].map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
+                stake: newMatch.stake
+            });
+
+            setTimeout(() => {
+                broadcastMatchState(newMatch);
+                startAutoDraw(newMatch);
+            }, 500);
+        }
+    });
+
+    // Return to menu (cancel rematch waiting)
+    socket.on('returnToMenu', () => {
+        const player = players.get(socket.id);
+        if (!player) return;
+
+        // Remove from rematch waiting
+        rematchWaiting.forEach((waiting, matchId) => {
+            const idx = waiting.indexOf(socket.id);
+            if (idx !== -1) {
+                waiting.splice(idx, 1);
+                // Notify opponent that we left
+                const match = matches.get(matchId);
+                if (match) {
+                    const opponentId = match.playerOrder.find(id => id !== socket.id);
+                    if (opponentId && waiting.includes(opponentId)) {
+                        io.to(opponentId).emit('opponentLeft');
+                    }
+                }
+            }
+        });
+
+        player.currentMatch = null;
     });
 
     // Disconnect
@@ -466,18 +616,43 @@ io.on('connection', (socket) => {
         const player = players.get(socket.id);
         console.log(`Player disconnected: ${socket.id} (${player?.name || 'unknown'})`);
 
-        // Clean up lobbies
+        // Remove from matchmaking queues
+        matchmakingQueues.forEach((queue) => {
+            const idx = queue.indexOf(socket.id);
+            if (idx !== -1) queue.splice(idx, 1);
+        });
+
+        // Remove from rematch waiting
+        rematchWaiting.forEach((waiting, matchId) => {
+            const idx = waiting.indexOf(socket.id);
+            if (idx !== -1) waiting.splice(idx, 1);
+        });
+
+        // Remove from lobbies
         lobbies.forEach((lobby, code) => {
-            lobby.players = lobby.players.filter(p => p.id !== socket.id);
-            if (lobby.players.length === 0) {
-                lobbies.delete(code);
+            const idx = lobby.players.findIndex(p => p.id === socket.id);
+            if (idx !== -1) {
+                lobby.players.splice(idx, 1);
+                if (lobby.players.length === 0) {
+                    lobbies.delete(code);
+                } else {
+                    io.to(`lobby_${code}`).emit('lobbyUpdate', {
+                        code: lobby.code,
+                        players: lobby.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar })),
+                        stake: lobby.stake
+                    });
+                }
             }
         });
+        broadcastLobbyList();
 
         // Notify match opponent
         if (player?.currentMatch) {
             const match = matches.get(player.currentMatch);
             if (match) {
+                if (match.autoDrawTimer) {
+                    clearTimeout(match.autoDrawTimer);
+                }
                 const opponentId = match.playerOrder.find(id => id !== socket.id);
                 if (opponentId) {
                     io.to(opponentId).emit('opponentDisconnected');
@@ -486,13 +661,6 @@ io.on('connection', (socket) => {
         }
 
         players.delete(socket.id);
-
-        io.emit('lobbyList', Array.from(lobbies.values()).map(l => ({
-            code: l.code,
-            host: l.host.name,
-            stake: l.stake,
-            players: l.players.length
-        })));
     });
 });
 

@@ -979,25 +979,36 @@
             </div>
         </div>
 
-        <!-- LOBBIES SCREEN -->
+        <!-- PLAY SCREEN - Find Match -->
         <div id="lobbies-screen" class="screen">
             <div class="top-bar">
-                <button class="btn" onclick="showScreen('home')" style="font-size: 6px; padding: 8px;">← MENU</button>
-                <span class="pink" style="font-size: 8px;">MULTIPLAYER</span>
+                <button class="btn" onclick="cancelSearchAndGoHome()" style="font-size: 6px; padding: 8px;">← MENU</button>
+                <span class="pink" style="font-size: 8px;">PLAY</span>
             </div>
 
+            <!-- Find Match Section -->
             <div class="panel mb-12">
-                <div class="panel-title">JOIN A FRIEND</div>
-                <div class="flex gap-8">
-                    <input type="text" class="input" id="lobby-code-input" placeholder="Enter code..." maxlength="4" style="text-transform: uppercase; font-size: 14px; text-align: center; letter-spacing: 4px;">
-                    <button class="btn primary" onclick="joinLobby()">JOIN</button>
-                </div>
-            </div>
-
-            <div class="panel mb-12">
-                <div class="panel-title">CREATE A LOBBY</div>
-                <div class="flex gap-8 items-center">
+                <div class="panel-title">⚡ FIND MATCH</div>
+                <p class="muted mb-8" style="font-size: 6px;">Auto-match with a player at the same stake</p>
+                <div class="flex gap-8 items-center mb-8">
                     <span class="muted" style="font-size: 7px;">STAKE:</span>
+                    <select id="find-match-stake" class="input" style="width: auto; font-size: 10px; padding: 10px;">
+                        <option value="0.25">25¢</option>
+                        <option value="0.50">50¢</option>
+                        <option value="1" selected>$1</option>
+                        <option value="2">$2</option>
+                        <option value="5">$5</option>
+                        <option value="10">$10</option>
+                    </select>
+                </div>
+                <button class="btn primary" id="find-match-btn" onclick="findMatch()" style="width: 100%;">FIND MATCH</button>
+            </div>
+
+            <!-- Create Lobby Section -->
+            <div class="panel mb-12">
+                <div class="panel-title">🏠 CREATE LOBBY</div>
+                <p class="muted mb-8" style="font-size: 6px;">Create a lobby and share the code with a friend</p>
+                <div class="flex gap-8 items-center">
                     <select id="create-stake" class="input" style="width: auto; font-size: 8px; padding: 8px;">
                         <option value="0.25">25¢</option>
                         <option value="0.50">50¢</option>
@@ -1010,31 +1021,58 @@
                 </div>
             </div>
 
-            <div class="panel-title">OPEN LOBBIES</div>
-            <div id="lobby-list">
-                <div class="muted text-center" style="font-size: 7px; padding: 20px;">No open lobbies. Create one!</div>
+            <!-- Join Lobby Section -->
+            <div class="panel mb-12">
+                <div class="panel-title">🔗 JOIN LOBBY</div>
+                <div class="flex gap-8">
+                    <input type="text" class="input" id="lobby-code-input" placeholder="CODE" maxlength="4" style="text-transform: uppercase; font-size: 14px; text-align: center; letter-spacing: 4px; width: 120px;">
+                    <button class="btn" onclick="joinLobby()">JOIN</button>
+                </div>
+            </div>
+
+            <!-- Active Lobbies List -->
+            <div class="panel-title">📋 ACTIVE LOBBIES</div>
+            <div id="lobby-list" style="max-height: 150px; overflow-y: auto;">
+                <div class="muted text-center" style="font-size: 7px; padding: 20px;">No open lobbies</div>
             </div>
         </div>
 
-        <!-- WAITING ROOM -->
-        <div id="waiting-screen" class="screen">
+        <!-- SEARCHING SCREEN -->
+        <div id="searching-screen" class="screen">
             <div class="top-bar">
-                <button class="btn" onclick="leaveLobby()" style="font-size: 6px; padding: 8px;">← LEAVE</button>
-                <span class="pink" style="font-size: 8px;">WAITING</span>
+                <button class="btn" onclick="cancelSearch()" style="font-size: 6px; padding: 8px;">← CANCEL</button>
+                <span class="pink" style="font-size: 8px;">SEARCHING</span>
             </div>
 
             <div class="flex-1 flex flex-col items-center justify-center text-center">
                 <div class="panel" style="padding: 30px;">
-                    <div class="panel-title">YOUR LOBBY CODE</div>
+                    <div style="font-size: 40px; margin-bottom: 16px;">🔍</div>
+                    <h2 class="gold mb-8">FINDING MATCH</h2>
+                    <p class="muted mb-8" style="font-size: 7px;">Stake: $<span id="search-stake">1</span></p>
+                    <p class="cyan" style="font-size: 6px; animation: pulse 1s infinite;">Searching for opponent...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- WAITING ROOM (for lobbies) -->
+        <div id="waiting-screen" class="screen">
+            <div class="top-bar">
+                <button class="btn" onclick="leaveLobby()" style="font-size: 6px; padding: 8px;">← LEAVE</button>
+                <span class="pink" style="font-size: 8px;">LOBBY</span>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center text-center">
+                <div class="panel" style="padding: 30px;">
+                    <div class="panel-title">LOBBY CODE</div>
                     <div class="gold" style="font-size: 32px; letter-spacing: 8px; margin-bottom: 16px;" id="lobby-code-display">----</div>
                     <p class="muted mb-12" style="font-size: 6px;">Share this code with your friend!</p>
 
-                    <div class="panel-title">PLAYERS (<span id="player-count">1</span>/2)</div>
-                    <div id="waiting-players" style="font-size: 8px;">
-                        <!-- Players will be shown here -->
-                    </div>
+                    <div class="panel-title">STAKE: $<span id="lobby-stake">1</span></div>
 
-                    <p class="cyan" style="font-size: 6px; margin-top: 16px; animation: pulse 1s infinite;">Waiting for opponent...</p>
+                    <div class="panel-title" style="margin-top: 12px;">PLAYERS (<span id="player-count">1</span>/2)</div>
+                    <div id="waiting-players" style="font-size: 8px; margin-bottom: 12px;"></div>
+
+                    <p class="cyan" style="font-size: 6px; animation: pulse 1s infinite;">Waiting for opponent...</p>
                 </div>
             </div>
         </div>
@@ -1133,10 +1171,6 @@
                 <div class="cards-row" id="player-cards"></div>
             </div>
 
-            <div class="flex justify-center mb-8">
-                <button class="btn primary" id="draw-btn" onclick="revealNextCards()">DRAW CARD</button>
-            </div>
-
             <div class="panel flex-1 flex flex-col">
                 <div class="panel-title">BATTLE LOG</div>
                 <div class="combat-log" id="combat-log"></div>
@@ -1159,11 +1193,12 @@
                             <p class="red" style="font-size: 14px;" id="result-opponent-hp">0</p>
                         </div>
                     </div>
+                    <p id="waiting-text" class="cyan" style="font-size: 6px; margin-top: 12px; display: none; animation: pulse 1s infinite;">Waiting for opponent...</p>
                 </div>
 
-                <div class="flex gap-12">
-                    <button class="btn primary" onclick="playAgain()">PLAY AGAIN</button>
-                    <button class="btn" onclick="showScreen('home')">MENU</button>
+                <div class="flex gap-12" id="result-buttons">
+                    <button class="btn primary" id="play-again-btn" onclick="playAgain()">PLAY AGAIN</button>
+                    <button class="btn" onclick="returnToMenu()">MENU</button>
                 </div>
             </div>
         </div>
@@ -2114,18 +2149,18 @@ let isMultiplayer = false;
 let currentLobbyCode = null;
 let myPlayerId = null;
 let currentMatch = null;
+let currentSearchStake = null;
+let waitingForRematch = false;
 
 function connectToServer() {
     if (socket && socket.connected) return;
 
-    // Connect to server (same host)
     socket = io();
 
     socket.on('connect', () => {
         console.log('Connected to server!');
         updateConnectionStatus(true);
 
-        // Register player
         socket.emit('register', {
             name: G.username,
             avatar: G.avatar,
@@ -2150,12 +2185,14 @@ function connectToServer() {
     socket.on('lobbyCreated', (data) => {
         currentLobbyCode = data.code;
         document.getElementById('lobby-code-display').textContent = data.code;
+        document.getElementById('lobby-stake').textContent = data.lobby.stake;
         showScreen('waiting');
         renderWaitingPlayers([{name: G.username, avatar: G.avatar}]);
     });
 
     socket.on('lobbyUpdate', (data) => {
         document.getElementById('player-count').textContent = data.players.length;
+        document.getElementById('lobby-stake').textContent = data.stake;
         renderWaitingPlayers(data.players);
     });
 
@@ -2163,14 +2200,34 @@ function connectToServer() {
         alert(data.message);
     });
 
+    // Searching for match
+    socket.on('searching', (data) => {
+        currentSearchStake = data.stake;
+        document.getElementById('search-stake').textContent = data.stake;
+        showScreen('searching');
+    });
+
+    socket.on('searchCancelled', () => {
+        currentSearchStake = null;
+        showScreen('lobbies');
+    });
+
+    // Match found via matchmaking
+    socket.on('matchFound', (data) => {
+        console.log('Match found!', data);
+    });
+
     socket.on('matchStart', (data) => {
         isMultiplayer = true;
+        waitingForRematch = false;
         G.currentStake = data.stake;
         G.bankroll -= data.stake;
+        G.matchOver = false;
         showScreen('match');
         document.getElementById('match-stake').textContent = '$' + data.stake + ' MATCH';
-        document.getElementById('draw-btn').style.display = 'block';
-        document.getElementById('draw-btn').textContent = 'DRAW CARD';
+        document.getElementById('waiting-text').style.display = 'none';
+        document.getElementById('play-again-btn').disabled = false;
+        updateAllDisplays();
     });
 
     socket.on('matchUpdate', (data) => {
@@ -2179,10 +2236,27 @@ function connectToServer() {
         renderMultiplayerMatch(data.match, data.yourId);
     });
 
+    socket.on('waitingForOpponent', () => {
+        waitingForRematch = true;
+        document.getElementById('waiting-text').style.display = 'block';
+        document.getElementById('play-again-btn').disabled = true;
+        document.getElementById('play-again-btn').textContent = 'WAITING...';
+    });
+
+    socket.on('opponentLeft', () => {
+        waitingForRematch = false;
+        document.getElementById('waiting-text').style.display = 'none';
+        document.getElementById('play-again-btn').disabled = false;
+        document.getElementById('play-again-btn').textContent = 'PLAY AGAIN';
+        alert('Opponent left. Find a new match!');
+        showScreen('lobbies');
+    });
+
     socket.on('opponentDisconnected', () => {
         alert('Opponent disconnected!');
         isMultiplayer = false;
-        showScreen('home');
+        waitingForRematch = false;
+        showScreen('lobbies');
     });
 }
 
@@ -2262,6 +2336,40 @@ function leaveLobby() {
     showScreen('lobbies');
 }
 
+function findMatch() {
+    if (!socket || !socket.connected) {
+        alert('Not connected to server. Please try again.');
+        return;
+    }
+    const stake = parseFloat(document.getElementById('find-match-stake').value);
+    socket.emit('findMatch', { stake });
+}
+
+function cancelSearch() {
+    if (socket) {
+        socket.emit('cancelSearch');
+    }
+    currentSearchStake = null;
+    showScreen('lobbies');
+}
+
+function cancelSearchAndGoHome() {
+    if (socket && currentSearchStake) {
+        socket.emit('cancelSearch');
+    }
+    currentSearchStake = null;
+    showScreen('home');
+}
+
+function returnToMenu() {
+    if (socket) {
+        socket.emit('returnToMenu');
+    }
+    isMultiplayer = false;
+    waitingForRematch = false;
+    showScreen('lobbies');
+}
+
 function renderMultiplayerMatch(match, myId) {
     const opponentId = match.playerOrder.find(id => id !== myId);
     const me = match.players[myId];
@@ -2297,10 +2405,13 @@ function renderMultiplayerMatch(match, myId) {
     logEl.innerHTML = match.combatLog.map(e => `<div class="log-entry ${e.type}">${e.msg}</div>`).join('');
     logEl.scrollTop = logEl.scrollHeight;
 
-    // Update button
-    const btn = document.getElementById('draw-btn');
-    if (match.matchOver) {
-        btn.style.display = 'none';
+    // Play card sound on new reveals
+    if (match.revealIndex >= 0 && typeof playCardDrawSound === 'function') {
+        playCardDrawSound();
+    }
+
+    // Check for match over
+    if (match.matchOver && !G.matchOver) {
         G.matchOver = true;
         G.playerWon = match.winner === myId;
 
@@ -2321,10 +2432,11 @@ function renderMultiplayerMatch(match, myId) {
             document.getElementById('result-amount').textContent = G.playerWon ? '+$' + (match.stake * 2).toFixed(2) : '-$' + match.stake.toFixed(2);
             document.getElementById('result-player-hp').textContent = Math.max(0, me.hp);
             document.getElementById('result-opponent-hp').textContent = Math.max(0, opponent.hp);
+            document.getElementById('waiting-text').style.display = 'none';
+            document.getElementById('play-again-btn').disabled = false;
+            document.getElementById('play-again-btn').textContent = 'PLAY AGAIN';
             showScreen('result');
         }, 1500);
-    } else {
-        btn.style.display = 'block';
     }
 
     updateAllDisplays();
