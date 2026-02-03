@@ -860,15 +860,17 @@
         .duckling-plane {
             position: fixed;
             z-index: 1000;
-            animation: fly-across 15s linear infinite;
+            animation: fly-across 80s linear infinite;
             pointer-events: none;
+            transform: scaleX(-1);
         }
         @keyframes fly-across {
-            0% { left: -150px; top: 15%; transform: rotate(-5deg); }
-            25% { top: 10%; transform: rotate(3deg); }
-            50% { top: 20%; transform: rotate(-3deg); }
-            75% { top: 12%; transform: rotate(5deg); }
-            100% { left: calc(100% + 150px); top: 18%; transform: rotate(-5deg); }
+            0%, 85% { right: -200px; top: 15%; opacity: 0; }
+            86% { right: -200px; top: 15%; opacity: 1; }
+            88% { top: 12%; }
+            92% { top: 18%; }
+            96% { top: 14%; }
+            100% { right: calc(100% + 200px); top: 16%; opacity: 1; }
         }
         .plane-body {
             position: relative;
@@ -877,25 +879,26 @@
         }
         .plane-sign {
             position: absolute;
-            right: -60px;
+            left: -120px;
             top: 15px;
             background: #fff;
             border: 2px solid #ffb6a3;
             padding: 3px 6px;
-            font-size: 5px;
+            font-size: 4px;
             font-family: 'Press Start 2P', monospace;
             color: #e07a5f;
             white-space: nowrap;
             border-radius: 3px;
-            transform: rotate(5deg);
+            transform: scaleX(-1) rotate(-5deg);
         }
         .plane-banner-rope {
             position: absolute;
-            right: -10px;
+            left: -10px;
             top: 20px;
             width: 50px;
             height: 2px;
             background: #8B4513;
+            transform: scaleX(-1);
         }
     </style>
 </head>
@@ -941,7 +944,7 @@
             <!-- Banner rope -->
             <div class="plane-banner-rope"></div>
             <!-- Sign -->
-            <div class="plane-sign">GO GET SOME!</div>
+            <div class="plane-sign">MAYBE YOU'LL MAKE SOME FRIENDS</div>
         </div>
     </div>
 
