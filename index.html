@@ -827,6 +827,76 @@
             0% { left: -30px; }
             100% { left: calc(100% + 30px); }
         }
+
+        /* Match screen bouncing avatars */
+        .match-avatars-container {
+            position: relative;
+            height: 50px;
+            margin: 4px 0;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(168,216,234,0.3) 0%, rgba(255,205,184,0.3) 100%);
+            border-radius: 6px;
+        }
+        .bouncing-avatar {
+            position: absolute;
+            animation: bounce-around 3s ease-in-out infinite;
+        }
+        .player-avatar-bounce {
+            left: 20%;
+            animation-delay: 0s;
+        }
+        .opponent-avatar-bounce {
+            right: 20%;
+            animation-delay: -1.5s;
+        }
+        @keyframes bounce-around {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            25% { transform: translateY(-15px) rotate(5deg); }
+            50% { transform: translateY(-5px) rotate(-3deg); }
+            75% { transform: translateY(-20px) rotate(8deg); }
+        }
+
+        /* Duckling flying plane */
+        .duckling-plane {
+            position: fixed;
+            z-index: 1000;
+            animation: fly-across 15s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes fly-across {
+            0% { left: -150px; top: 15%; transform: rotate(-5deg); }
+            25% { top: 10%; transform: rotate(3deg); }
+            50% { top: 20%; transform: rotate(-3deg); }
+            75% { top: 12%; transform: rotate(5deg); }
+            100% { left: calc(100% + 150px); top: 18%; transform: rotate(-5deg); }
+        }
+        .plane-body {
+            position: relative;
+            width: 80px;
+            height: 30px;
+        }
+        .plane-sign {
+            position: absolute;
+            right: -60px;
+            top: 15px;
+            background: #fff;
+            border: 2px solid #ffb6a3;
+            padding: 3px 6px;
+            font-size: 5px;
+            font-family: 'Press Start 2P', monospace;
+            color: #e07a5f;
+            white-space: nowrap;
+            border-radius: 3px;
+            transform: rotate(5deg);
+        }
+        .plane-banner-rope {
+            position: absolute;
+            right: -10px;
+            top: 20px;
+            width: 50px;
+            height: 2px;
+            background: #8B4513;
+        }
     </style>
 </head>
 <body>
@@ -836,6 +906,44 @@
     <div class="cloud cloud-3"></div>
     <div class="cloud cloud-4"></div>
     <div class="cloud cloud-5"></div>
+
+    <!-- Duckling Flying Plane with Banner -->
+    <div class="duckling-plane" id="duckling-plane">
+        <div class="plane-body">
+            <!-- Plane -->
+            <svg width="80" height="35" viewBox="0 0 80 35" style="image-rendering: pixelated;">
+                <!-- Plane body -->
+                <rect x="10" y="12" width="45" height="12" fill="#e05d5d" />
+                <rect x="50" y="10" width="15" height="16" fill="#e05d5d" />
+                <!-- Nose -->
+                <rect x="5" y="14" width="8" height="8" fill="#ffb6a3" />
+                <!-- Wings -->
+                <rect x="25" y="5" width="20" height="6" fill="#a8d8ea" />
+                <rect x="25" y="24" width="20" height="6" fill="#a8d8ea" />
+                <!-- Tail -->
+                <rect x="60" y="5" width="8" height="8" fill="#a8d8ea" />
+                <!-- Propeller -->
+                <rect x="2" y="10" width="3" height="4" fill="#333" />
+                <rect x="2" y="22" width="3" height="4" fill="#333" />
+                <!-- Duckling pilot with hat and scarf -->
+                <rect x="35" y="8" width="10" height="10" fill="#ffcc00" /> <!-- Duck head -->
+                <rect x="37" y="10" width="2" height="2" fill="#333" /> <!-- Eye -->
+                <rect x="33" y="12" width="4" height="3" fill="#ff9900" /> <!-- Beak -->
+                <rect x="35" y="5" width="10" height="4" fill="#8B4513" /> <!-- Hat -->
+                <rect x="33" y="4" width="14" height="2" fill="#8B4513" /> <!-- Hat brim -->
+                <!-- Scarf waving -->
+                <rect x="42" y="14" width="8" height="3" fill="#e05d5d" />
+                <rect x="48" y="12" width="6" height="3" fill="#e05d5d" />
+                <rect x="52" y="10" width="5" height="3" fill="#e05d5d" />
+                <!-- Wing waving -->
+                <rect x="28" y="10" width="5" height="4" fill="#ffcc00" />
+            </svg>
+            <!-- Banner rope -->
+            <div class="plane-banner-rope"></div>
+            <!-- Sign -->
+            <div class="plane-sign">GO GET SOME!</div>
+        </div>
+    </div>
 
     <!-- Mute Button -->
     <button id="mute-btn" class="mute-btn" onclick="toggleMute()" title="Toggle Sound"></button>
@@ -951,15 +1059,19 @@
             </div>
 
             <!-- Animated Pixel Scene with Animals -->
-            <div class="pixel-scene" style="margin: 8px 0; background: linear-gradient(180deg, #a8d8ea 0%, #7bc0d4 50%, #deb887 50%, #c4a574 100%);">
-                <!-- Water -->
-                <div style="position: absolute; bottom: 20px; left: 0; right: 0; height: 8px; background: #5aa9e6; opacity: 0.6;"></div>
-                <!-- Boat with animal -->
-                <div class="moving-element" id="boat-scene" style="bottom: 18px; animation-duration: 12s;"></div>
-                <!-- Car with animal -->
-                <div class="moving-element" id="car-scene" style="bottom: 4px; animation-duration: 6s; animation-delay: -3s;"></div>
-                <!-- Flying animal -->
-                <div class="moving-element float-anim" id="flying-scene" style="top: 4px; animation-duration: 10s; animation-delay: -5s;"></div>
+            <div class="pixel-scene" style="margin: 8px 0; height: 50px; background: linear-gradient(180deg, #a8d8ea 0%, #7bc0d4 40%, #5aa9e6 40%, #4a99d6 50%, #deb887 50%, #c4a574 100%);">
+                <!-- Waves -->
+                <div style="position: absolute; bottom: 22px; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.3);"></div>
+                <!-- Boat with fox -->
+                <div class="moving-element" id="boat-scene" style="bottom: 18px; animation-duration: 14s;"></div>
+                <!-- Skateboarding rabbit -->
+                <div class="moving-element" id="skate-scene" style="bottom: 2px; animation-duration: 5s; animation-delay: -2s;"></div>
+                <!-- Car with bear -->
+                <div class="moving-element" id="car-scene" style="bottom: 2px; animation-duration: 8s; animation-delay: -6s;"></div>
+                <!-- Bird with balloon -->
+                <div class="moving-element float-anim" id="balloon-scene" style="top: 2px; animation-duration: 12s; animation-delay: -4s;"></div>
+                <!-- Jumping frog -->
+                <div class="moving-element" id="frog-scene" style="bottom: 2px; animation-duration: 4s; animation-delay: -1s;"></div>
             </div>
 
             <div class="panel mt-auto">
@@ -1303,7 +1415,10 @@
         <!-- MATCH SCREEN -->
         <div id="match-screen" class="screen">
             <div class="top-bar">
-                <span class="gold" style="font-size: 8px;" id="match-stake">$1 MATCH</span>
+                <div class="bet-display" style="background: linear-gradient(180deg, #e09f3e 0%, #c4850a 100%); padding: 6px 12px; border-radius: 4px; border: 2px solid #fff;">
+                    <span style="font-size: 6px; color: #fff;">BET</span>
+                    <span class="gold" style="font-size: 12px; color: #fff; text-shadow: 1px 1px 0 #000;" id="match-stake">$1</span>
+                </div>
                 <div class="wallet-display">$<span id="match-wallet">0.00</span></div>
             </div>
 
@@ -1335,12 +1450,13 @@
                 <div class="cards-row" id="player-cards"></div>
             </div>
 
-            <!-- Draw Card Button (rate-limited) -->
-            <div class="flex justify-center mb-8">
-                <button class="btn primary" id="draw-card-btn" onclick="manualDraw()" style="font-size: 7px; padding: 10px 20px;">DRAW CARD</button>
+            <!-- Animated Player Avatars -->
+            <div class="match-avatars-container">
+                <div class="bouncing-avatar player-avatar-bounce" id="player-avatar-anim"></div>
+                <div class="bouncing-avatar opponent-avatar-bounce" id="opponent-avatar-anim"></div>
             </div>
 
-            <div class="panel" style="max-height: 80px; overflow: hidden;">
+            <div class="panel" style="max-height: 60px; overflow: hidden;">
                 <div class="panel-title" style="font-size: 6px; margin-bottom: 4px;">BATTLE LOG</div>
                 <div class="combat-log" id="combat-log" style="max-height: 50px; font-size: 5px;"></div>
             </div>
@@ -2105,7 +2221,7 @@ function startMatch(stake) {
     G.matchOver = false;
     G.combatLog = [];
 
-    document.getElementById('match-stake').textContent = '$' + stake + ' VS BOT';
+    document.getElementById('match-stake').textContent = '$' + stake;
     document.getElementById('opponent-name').textContent = G.opponent.name + ' (BOT)';
 
     showScreen('match');
@@ -2177,10 +2293,15 @@ function renderMatch() {
     G.player.cards.forEach((c, i) => pc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
     G.opponent.cards.forEach((c, i) => oc.appendChild(createCard(c, i > G.revealIndex, i === G.revealIndex)));
 
-    // Button
-    const btn = document.getElementById('draw-btn');
-    btn.style.display = G.matchOver ? 'none' : 'block';
-    btn.textContent = G.revealIndex >= 2 ? 'FINISH' : 'DRAW CARD';
+    // Bouncing avatars in match
+    const playerAvatarAnim = document.getElementById('player-avatar-anim');
+    const opponentAvatarAnim = document.getElementById('opponent-avatar-anim');
+    if (playerAvatarAnim) playerAvatarAnim.innerHTML = renderPixelAvatar(G.avatar, 28);
+    if (opponentAvatarAnim) {
+        // Pick a random avatar for opponent in solo mode
+        const opponentAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+        opponentAvatarAnim.innerHTML = renderPixelAvatar(opponentAvatar, 28);
+    }
 
     updateAllDisplays();
 }
@@ -2400,37 +2521,71 @@ document.getElementById('menu-duck').innerHTML = renderPixelAvatar('duck', 28);
 // Initialize animated pixel scenes
 function initAnimatedScenes() {
     // Running animals near Find Match
-    document.getElementById('home-runner-1').innerHTML = renderPixelAvatar('dog', 20);
-    document.getElementById('home-runner-2').innerHTML = renderPixelAvatar('cat', 20);
+    const runner1 = document.getElementById('home-runner-1');
+    const runner2 = document.getElementById('home-runner-2');
+    if (runner1) runner1.innerHTML = renderPixelAvatar('dog', 20);
+    if (runner2) runner2.innerHTML = renderPixelAvatar('cat', 20);
 
-    // Boat scene - fox on a boat
+    // Boat scene - fox on a boat with sail
     const boatScene = document.getElementById('boat-scene');
     if (boatScene) {
         boatScene.innerHTML = `
             <div style="position: relative;">
-                <div style="position: absolute; bottom: 0; width: 28px; height: 10px; background: #8B4513; border-radius: 0 0 4px 4px;"></div>
-                <div style="position: absolute; bottom: 8px; left: 6px;">${renderPixelAvatar('fox', 16)}</div>
+                <div style="position: absolute; bottom: 0; width: 32px; height: 10px; background: #8B4513; border-radius: 0 0 6px 6px;"></div>
+                <div style="position: absolute; bottom: 10px; left: 14px; width: 3px; height: 18px; background: #654321;"></div>
+                <div style="position: absolute; bottom: 14px; left: 17px; width: 0; height: 0; border-left: 12px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent;"></div>
+                <div style="position: absolute; bottom: 8px; left: 4px;">${renderPixelAvatar('fox', 14)}</div>
             </div>
         `;
     }
 
-    // Car scene - bear in a car
+    // Skateboarding rabbit
+    const skateScene = document.getElementById('skate-scene');
+    if (skateScene) {
+        skateScene.innerHTML = `
+            <div style="position: relative;">
+                <div style="position: absolute; bottom: 0; width: 20px; height: 4px; background: #e09f3e; border-radius: 2px;"></div>
+                <div style="position: absolute; bottom: 0; left: 2px; width: 4px; height: 4px; background: #333; border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: 0; left: 14px; width: 4px; height: 4px; background: #333; border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: 4px; left: 2px;">${renderPixelAvatar('rabbit', 14)}</div>
+            </div>
+        `;
+    }
+
+    // Car scene - bear in a red car
     const carScene = document.getElementById('car-scene');
     if (carScene) {
         carScene.innerHTML = `
             <div style="position: relative;">
-                <div style="position: absolute; bottom: 0; width: 30px; height: 12px; background: #e05d5d; border-radius: 2px;"></div>
-                <div style="position: absolute; bottom: 0; left: 2px; width: 6px; height: 6px; background: #333; border-radius: 50%;"></div>
-                <div style="position: absolute; bottom: 0; left: 22px; width: 6px; height: 6px; background: #333; border-radius: 50%;"></div>
-                <div style="position: absolute; bottom: 8px; left: 8px;">${renderPixelAvatar('bear', 12)}</div>
+                <div style="position: absolute; bottom: 4px; width: 32px; height: 14px; background: #e05d5d; border-radius: 3px 8px 2px 2px;"></div>
+                <div style="position: absolute; bottom: 8px; left: 8px; width: 14px; height: 8px; background: #a8d8ea; border-radius: 2px;"></div>
+                <div style="position: absolute; bottom: 0; left: 4px; width: 8px; height: 8px; background: #333; border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: 0; left: 20px; width: 8px; height: 8px; background: #333; border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: 10px; left: 10px;">${renderPixelAvatar('bear', 12)}</div>
             </div>
         `;
     }
 
-    // Flying scene - bird flying
-    const flyingScene = document.getElementById('flying-scene');
-    if (flyingScene) {
-        flyingScene.innerHTML = renderPixelAvatar('owl', 16);
+    // Bird with balloon
+    const balloonScene = document.getElementById('balloon-scene');
+    if (balloonScene) {
+        balloonScene.innerHTML = `
+            <div style="position: relative;">
+                <div style="position: absolute; top: 0; left: 8px; width: 12px; height: 14px; background: #ff6b6b; border-radius: 50%;"></div>
+                <div style="position: absolute; top: 14px; left: 13px; width: 2px; height: 10px; background: #333;"></div>
+                <div style="position: absolute; top: 22px; left: 6px;">${renderPixelAvatar('bird', 14)}</div>
+            </div>
+        `;
+    }
+
+    // Jumping frog
+    const frogScene = document.getElementById('frog-scene');
+    if (frogScene) {
+        frogScene.innerHTML = `
+            <div style="position: relative; animation: hop 0.3s infinite;">
+                ${renderPixelAvatar('frog', 14)}
+            </div>
+        `;
     }
 }
 
@@ -2557,7 +2712,7 @@ function connectToServer() {
         G.bankroll -= data.stake;
         G.matchOver = false;
         showScreen('match');
-        document.getElementById('match-stake').textContent = '$' + data.stake + ' MATCH';
+        document.getElementById('match-stake').textContent = '$' + data.stake;
         document.getElementById('waiting-text').style.display = 'none';
         document.getElementById('play-again-btn').disabled = false;
         // Show ready overlay and reset ready button
