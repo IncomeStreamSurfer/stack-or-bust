@@ -474,7 +474,7 @@
         .hp-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 7px; color: #5d4e37; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); }
 
         /* Combat Log */
-        .combat-log { flex: 1; overflow-y: auto; font-size: 6px; line-height: 1.5; padding: 6px; background: #fef6e8; border: 2px solid #ffcdb8; border-radius: 4px; }
+        .combat-log { flex: 1; overflow-y: auto; font-size: 7px; line-height: 1.8; padding: 8px; background: #fef6e8; border: 2px solid #ffcdb8; border-radius: 4px; }
         .log-entry.damage { color: #e05d5d; }
         .log-entry.heal { color: #4caf7c; }
         .log-entry.special { color: #9d8cd9; }
@@ -1459,9 +1459,9 @@
                 <div class="bouncing-avatar opponent-avatar-bounce" id="opponent-avatar-anim"></div>
             </div>
 
-            <div class="panel" style="max-height: 60px; overflow: hidden;">
-                <div class="panel-title" style="font-size: 6px; margin-bottom: 4px;">BATTLE LOG</div>
-                <div class="combat-log" id="combat-log" style="max-height: 50px; font-size: 5px;"></div>
+            <div class="panel" style="flex: 1; min-height: 100px; display: flex; flex-direction: column; margin-top: 8px;">
+                <div class="panel-title" style="font-size: 7px; margin-bottom: 6px;">BATTLE LOG</div>
+                <div class="combat-log" id="combat-log" style="flex: 1; min-height: 80px; font-size: 7px; line-height: 1.8; overflow-y: auto;"></div>
             </div>
 
             <!-- Ready Overlay -->
