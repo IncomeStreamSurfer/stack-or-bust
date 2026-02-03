@@ -18,6 +18,7 @@ const matches = new Map();
 const matchmakingQueues = new Map(); // stake -> [player ids]
 const rematchWaiting = new Map(); // matchId -> [player ids waiting]
 const lobbies = new Map(); // code -> lobby
+const readyPlayers = new Map(); // matchId -> Set of player ids who are ready
 
 // Generate unique lobby code
 function generateLobbyCode() {
@@ -33,6 +34,7 @@ function broadcastLobbyList() {
     const lobbyList = Array.from(lobbies.values()).map(l => ({
         code: l.code,
         host: l.host.name,
+        hostAvatar: l.host.avatar,
         stake: l.stake,
         players: l.players.length
     }));
@@ -355,12 +357,50 @@ function tryMatchmaking(stake) {
                 stake
             });
 
-            // Send initial state and start auto-draw
+            // Send initial state but wait for ready
             setTimeout(() => {
                 broadcastMatchState(match);
-                startAutoDraw(match);
+                readyPlayers.set(match.id, new Set());
+                // Don't auto-start - wait for both players to click Ready
             }, 500);
         }, 1000);
+    }
+}
+
+// Player ready handler
+function handlePlayerReady(matchId, playerId) {
+    const match = matches.get(matchId);
+    if (!match || match.matchOver) return;
+
+    if (!readyPlayers.has(matchId)) {
+        readyPlayers.set(matchId, new Set());
+    }
+
+    const ready = readyPlayers.get(matchId);
+    ready.add(playerId);
+
+    // Notify both players of ready state
+    match.playerOrder.forEach(pId => {
+        io.to(pId).emit('readyUpdate', {
+            readyCount: ready.size,
+            youReady: ready.has(pId)
+        });
+    });
+
+    console.log(`Player ${playerId} ready. ${ready.size}/2 ready for match ${matchId}`);
+
+    // Both players ready - start the match!
+    if (ready.size === 2) {
+        console.log('Both players ready! Starting match...');
+        readyPlayers.delete(matchId);
+
+        match.playerOrder.forEach(pId => {
+            io.to(pId).emit('matchBegin');
+        });
+
+        setTimeout(() => {
+            startAutoDraw(match);
+        }, 500);
     }
 }
 
@@ -449,7 +489,8 @@ io.on('connection', (socket) => {
 
             setTimeout(() => {
                 broadcastMatchState(match);
-                startAutoDraw(match);
+                readyPlayers.set(match.id, new Set());
+                // Wait for both players to click Ready
             }, 500);
 
             lobbies.delete(lobby.code);
@@ -520,6 +561,14 @@ io.on('connection', (socket) => {
         console.log(`${player.name} cancelled search`);
     });
 
+    // Player ready
+    socket.on('playerReady', () => {
+        const player = players.get(socket.id);
+        if (!player || !player.currentMatch) return;
+
+        handlePlayerReady(player.currentMatch, socket.id);
+    });
+
     // Play again request
     socket.on('playAgain', () => {
         const player = players.get(socket.id);
@@ -582,7 +631,8 @@ io.on('connection', (socket) => {
 
             setTimeout(() => {
                 broadcastMatchState(newMatch);
-                startAutoDraw(newMatch);
+                readyPlayers.set(newMatch.id, new Set());
+                // Wait for both players to click Ready again
             }, 500);
         }
     });

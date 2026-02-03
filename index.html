@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STACK OR BUST</title>
+    <!-- 8-bit anime style pixel art favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect fill='%23a8d8ea' width='16' height='16'/><rect fill='%23fff' x='2' y='1' width='12' height='14' rx='1'/><rect fill='%23ffb6a3' x='4' y='3' width='8' height='3'/><text x='8' y='11' font-size='7' fill='%23e07a5f' text-anchor='middle' font-family='sans-serif' font-weight='bold'>♠</text><rect fill='%23e09f3e' x='3' y='13' width='2' height='2'/><rect fill='%23e09f3e' x='11' y='13' width='2' height='2'/></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <script src="audio.js" defer></script>
@@ -117,8 +119,8 @@
             overflow: hidden;
         }
 
-        .screen { display: none; width: 100%; height: 100%; padding: 16px; position: absolute; top: 0; left: 0; flex-direction: column; overflow-y: auto; }
-        .screen.active { display: flex; }
+        .screen { display: none; width: 100%; height: 100%; padding: 16px; position: absolute; top: 0; left: 0; flex-direction: column; overflow-y: auto; z-index: 1; }
+        .screen.active { display: flex; z-index: 10; }
 
         /* Common Styles - Pixel Art Panels */
         .panel {
@@ -337,20 +339,50 @@
         .friend-status.offline { color: #9a8c7a; }
 
         /* Lobby List */
+        .lobby-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            text-align: center;
+            height: 100%;
+            min-height: 120px;
+        }
         .lobby-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: #fff5ed;
-            border: 2px solid #ffcdb8;
-            margin-bottom: 8px;
-            border-radius: 6px;
+            gap: 10px;
+            padding: 10px 12px;
+            background: linear-gradient(180deg, #fff8f0 0%, #fff5ed 100%);
+            border: 3px solid #ffcdb8;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 0 #e8c4b8, 4px 4px 0 #d4effc;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
-        .lobby-info { flex: 1; }
-        .lobby-name { font-size: 9px; color: #e09f3e; margin-bottom: 4px; }
-        .lobby-details { font-size: 6px; color: #9a8c7a; }
-        .lobby-players { font-size: 8px; color: #4caf7c; }
+        .lobby-item:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 #e8c4b8, 5px 5px 0 #d4effc;
+        }
+        .lobby-item:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 #e8c4b8, 2px 2px 0 #d4effc;
+        }
+        .lobby-avatar {
+            flex-shrink: 0;
+        }
+        .lobby-info { flex: 1; min-width: 0; }
+        .lobby-host { font-size: 8px; color: #e09f3e; margin-bottom: 2px; font-weight: bold; }
+        .lobby-stake { font-size: 10px; color: #4caf7c; font-weight: bold; }
+        .lobby-code { font-size: 6px; color: #9a8c7a; letter-spacing: 1px; }
+        .lobby-join-btn {
+            font-size: 6px !important;
+            padding: 8px 12px !important;
+            background: linear-gradient(180deg, #4caf7c 0%, #3d9d6a 100%) !important;
+            border-color: #fff8f0 !important;
+            color: #fff !important;
+        }
 
         /* Input */
         .input {
@@ -727,6 +759,74 @@
             background: transparent;
             padding: 0;
         }
+
+        /* ========================================
+           ANIMATED PIXEL ART DECORATIONS
+           ======================================== */
+        .running-animal {
+            animation: hop 0.4s infinite ease-in-out;
+        }
+        @keyframes hop {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .running-animal.flip {
+            transform: scaleX(-1);
+        }
+        .running-animal.flip:nth-child(odd) {
+            animation: hop-flip 0.4s infinite ease-in-out;
+        }
+        @keyframes hop-flip {
+            0%, 100% { transform: scaleX(-1) translateY(0); }
+            50% { transform: scaleX(-1) translateY(-4px); }
+        }
+
+        /* Pixel art vehicle */
+        .pixel-car {
+            width: 24px;
+            height: 12px;
+            position: relative;
+            image-rendering: pixelated;
+        }
+
+        /* Floating animation for decorative elements */
+        .float-anim {
+            animation: float 3s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-3px) rotate(2deg); }
+            75% { transform: translateY(2px) rotate(-2deg); }
+        }
+
+        /* Wiggle animation */
+        .wiggle-anim {
+            animation: wiggle 2s infinite ease-in-out;
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        /* Decorative pixel scene container */
+        .pixel-scene {
+            position: relative;
+            height: 40px;
+            overflow: hidden;
+            background: linear-gradient(180deg, transparent 0%, rgba(168, 216, 234, 0.3) 100%);
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        /* Moving element across screen */
+        .moving-element {
+            position: absolute;
+            animation: move-across 8s linear infinite;
+        }
+        @keyframes move-across {
+            0% { left: -30px; }
+            100% { left: calc(100% + 30px); }
+        }
     </style>
 </head>
 <body>
@@ -798,45 +898,77 @@
         <div id="home-screen" class="screen">
             <div class="top-bar">
                 <div class="user-info">
-                    <span class="user-avatar" id="home-avatar">😎</span>
+                    <span class="user-avatar" id="home-avatar"></span>
                     <span class="user-name" id="home-username">Guest</span>
                 </div>
                 <div class="wallet-display">$<span id="home-wallet">0.00</span></div>
             </div>
 
-            <h2 class="gold mb-16">MAIN MENU</h2>
+            <!-- FIND MATCH - Primary Action -->
+            <div class="panel mb-8" style="border-color: #ffb6a3; position: relative; overflow: visible;">
+                <div class="panel-title" style="font-size: 12px;">FIND MATCH</div>
+                <div class="flex gap-4 mb-12 flex-wrap justify-center">
+                    <button class="stake-btn" data-stake="0.25" onclick="selectHomeStake(0.25)">25¢</button>
+                    <button class="stake-btn" data-stake="0.50" onclick="selectHomeStake(0.50)">50¢</button>
+                    <button class="stake-btn selected" data-stake="1" onclick="selectHomeStake(1)">$1</button>
+                    <button class="stake-btn" data-stake="5" onclick="selectHomeStake(5)">$5</button>
+                    <button class="stake-btn" data-stake="10" onclick="selectHomeStake(10)">$10</button>
+                </div>
+                <button class="btn primary" onclick="findMatchFromHome()" style="width: 100%; font-size: 14px; padding: 18px 24px; letter-spacing: 2px;">FIND MATCH</button>
+                <!-- Animated pixel animals -->
+                <div class="running-animal" id="home-runner-1" style="position: absolute; bottom: -20px; left: -10px;"></div>
+                <div class="running-animal" id="home-runner-2" style="position: absolute; bottom: -20px; right: -10px; transform: scaleX(-1);"></div>
+            </div>
 
-            <div class="menu-grid">
-                <div class="menu-item" onclick="showScreen('play')">
-                    <div class="menu-item-icon">🎮</div>
-                    <div class="menu-item-label">PLAY</div>
+            <!-- Menu Options -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px;">
+                <div class="menu-item" onclick="showScreen('lobbies')" style="padding: 10px 6px;">
+                    <div class="menu-item-icon" style="font-size: 18px;">🏠</div>
+                    <div class="menu-item-label" style="font-size: 5px;">LOBBIES</div>
                 </div>
-                <div class="menu-item" onclick="showScreen('lobbies')">
-                    <div class="menu-item-icon">🏠</div>
-                    <div class="menu-item-label">LOBBIES</div>
+                <div class="menu-item" onclick="showScreen('wallet')" style="padding: 10px 6px;">
+                    <div class="menu-item-icon" style="font-size: 18px;">💰</div>
+                    <div class="menu-item-label" style="font-size: 5px;">WALLET</div>
                 </div>
-                <div class="menu-item" onclick="showScreen('wallet')">
-                    <div class="menu-item-icon">💰</div>
-                    <div class="menu-item-label">WALLET</div>
+                <div class="menu-item" onclick="showScreen('friends')" style="padding: 10px 6px;">
+                    <div class="menu-item-icon" style="font-size: 18px;">👥</div>
+                    <div class="menu-item-label" style="font-size: 5px;">FRIENDS</div>
                 </div>
-                <div class="menu-item" onclick="showScreen('friends')">
-                    <div class="menu-item-icon">👥</div>
-                    <div class="menu-item-label">FRIENDS</div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                <div class="menu-item" onclick="showScreen('profile')" style="padding: 10px 6px;">
+                    <div class="menu-item-icon" style="font-size: 18px;">⚙️</div>
+                    <div class="menu-item-label" style="font-size: 5px;">PROFILE</div>
                 </div>
-                <div class="menu-item" onclick="showScreen('profile')">
-                    <div class="menu-item-icon">⚙️</div>
-                    <div class="menu-item-label">PROFILE</div>
+                <div class="menu-item" onclick="showScreen('leaderboard')" style="padding: 10px 6px;">
+                    <div class="menu-item-icon" style="font-size: 18px;">🏆</div>
+                    <div class="menu-item-label" style="font-size: 5px;">RANKS</div>
                 </div>
-                <div class="menu-item" onclick="showScreen('leaderboard')">
-                    <div class="menu-item-icon">🏆</div>
-                    <div class="menu-item-label">RANKS</div>
+                <div class="menu-item" onclick="showScreen('play')" style="padding: 10px 6px;">
+                    <div class="menu-item-icon" style="font-size: 18px;">🎮</div>
+                    <div class="menu-item-label" style="font-size: 5px;">SOLO</div>
                 </div>
             </div>
 
+            <!-- Animated Pixel Scene with Animals -->
+            <div class="pixel-scene" style="margin: 8px 0; background: linear-gradient(180deg, #a8d8ea 0%, #7bc0d4 50%, #deb887 50%, #c4a574 100%);">
+                <!-- Water -->
+                <div style="position: absolute; bottom: 20px; left: 0; right: 0; height: 8px; background: #5aa9e6; opacity: 0.6;"></div>
+                <!-- Boat with animal -->
+                <div class="moving-element" id="boat-scene" style="bottom: 18px; animation-duration: 12s;"></div>
+                <!-- Car with animal -->
+                <div class="moving-element" id="car-scene" style="bottom: 4px; animation-duration: 6s; animation-delay: -3s;"></div>
+                <!-- Flying animal -->
+                <div class="moving-element float-anim" id="flying-scene" style="top: 4px; animation-duration: 10s; animation-delay: -5s;"></div>
+            </div>
+
             <div class="panel mt-auto">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center mb-4">
                     <span class="muted" style="font-size: 6px;">ONLINE: <span class="green">1,247</span></span>
-                    <span class="muted" style="font-size: 6px;">MATCHES TODAY: <span class="gold">8,432</span></span>
+                    <span class="muted" style="font-size: 6px;">MATCHES: <span class="gold">8,432</span></span>
+                </div>
+                <div class="text-center">
+                    <span class="cyan" style="font-size: 5px;">VIRTUAL CURRENCY ONLY • NOT REAL MONEY</span>
                 </div>
             </div>
 
@@ -869,16 +1001,17 @@
             </div>
         </div>
 
-        <!-- PLAY / STAKE SELECTION -->
+        <!-- PLAY / STAKE SELECTION (SOLO vs BOT) -->
         <div id="play-screen" class="screen">
             <div class="top-bar">
                 <button class="btn" onclick="showScreen('home')" style="font-size: 6px; padding: 8px;">← MENU</button>
                 <div class="wallet-display">$<span id="play-wallet">0.00</span></div>
             </div>
 
-            <h2 class="gold mb-12">SELECT STAKE</h2>
+            <h2 class="gold mb-4">SOLO VS BOT</h2>
+            <p class="cyan mb-8 text-center" style="font-size: 6px;">VIRTUAL CURRENCY • FOR FUN ONLY</p>
 
-            <div class="stake-grid mb-16">
+            <div class="stake-grid mb-12">
                 <div class="stake-btn" onclick="startMatch(0.25)">
                     <div class="stake-amount">25¢</div>
                 </div>
@@ -888,9 +1021,6 @@
                 <div class="stake-btn" onclick="startMatch(1)">
                     <div class="stake-amount">$1</div>
                 </div>
-                <div class="stake-btn" onclick="startMatch(2)">
-                    <div class="stake-amount">$2</div>
-                </div>
                 <div class="stake-btn" onclick="startMatch(5)">
                     <div class="stake-amount">$5</div>
                 </div>
@@ -899,9 +1029,15 @@
                 </div>
             </div>
 
+            <!-- Animated bot character -->
+            <div class="flex justify-center mb-8">
+                <div class="wiggle-anim" id="bot-character"></div>
+            </div>
+
             <div class="panel">
                 <div class="panel-title">HOW TO PLAY</div>
                 <p class="muted" style="font-size: 6px; line-height: 1.6;">
+                    • Play against our friendly bot!<br>
                     • Both players draw 3 cards<br>
                     • Cards are revealed one at a time<br>
                     • Deal damage, block, heal & more<br>
@@ -917,31 +1053,33 @@
                 <span class="pink" style="font-size: 8px;">MY WALLET</span>
             </div>
 
-            <div class="panel text-center mb-16" style="padding: 24px;">
-                <p class="muted mb-4" style="font-size: 7px;">BALANCE</p>
+            <div class="panel text-center mb-12" style="padding: 20px;">
+                <p class="muted mb-4" style="font-size: 7px;">VIRTUAL BALANCE</p>
                 <p class="green" style="font-size: 28px; text-shadow: 0 0 20px rgba(68,255,136,0.5);">$<span id="wallet-balance">0.00</span></p>
+                <p class="cyan" style="font-size: 5px; margin-top: 8px;">FOR FUN ONLY • NOT REAL MONEY</p>
+            </div>
+
+            <div class="panel mb-8">
+                <div class="panel-title">ADD COINS</div>
+                <div class="flex gap-6 flex-wrap justify-center">
+                    <button class="btn green" onclick="deposit(5)" style="font-size: 7px; padding: 10px;">+$5</button>
+                    <button class="btn green" onclick="deposit(10)" style="font-size: 7px; padding: 10px;">+$10</button>
+                    <button class="btn green" onclick="deposit(25)" style="font-size: 7px; padding: 10px;">+$25</button>
+                    <button class="btn green" onclick="deposit(50)" style="font-size: 7px; padding: 10px;">+$50</button>
+                </div>
             </div>
 
             <div class="panel mb-12">
-                <div class="panel-title">DEPOSIT</div>
-                <div class="flex gap-8 flex-wrap">
-                    <button class="btn green" onclick="deposit(5)">+$5</button>
-                    <button class="btn green" onclick="deposit(10)">+$10</button>
-                    <button class="btn green" onclick="deposit(25)">+$25</button>
-                    <button class="btn green" onclick="deposit(50)">+$50</button>
-                    <button class="btn green" onclick="deposit(100)">+$100</button>
+                <div class="panel-title">REMOVE COINS</div>
+                <div class="flex gap-6 flex-wrap justify-center">
+                    <button class="btn" onclick="withdraw(5)" style="font-size: 7px; padding: 10px;">-$5</button>
+                    <button class="btn" onclick="withdraw(10)" style="font-size: 7px; padding: 10px;">-$10</button>
+                    <button class="btn" onclick="withdraw(25)" style="font-size: 7px; padding: 10px;">-$25</button>
+                    <button class="btn gold" onclick="withdrawAll()" style="font-size: 7px; padding: 10px;">RESET</button>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-title">WITHDRAW</div>
-                <div class="flex gap-8 flex-wrap">
-                    <button class="btn" onclick="withdraw(5)">-$5</button>
-                    <button class="btn" onclick="withdraw(10)">-$10</button>
-                    <button class="btn" onclick="withdraw(25)">-$25</button>
-                    <button class="btn gold" onclick="withdrawAll()">ALL</button>
-                </div>
-            </div>
+            <button class="btn primary" onclick="saveWalletAndReturn()" style="width: 100%; font-size: 10px; padding: 14px;">SAVE & RETURN</button>
         </div>
 
         <!-- FRIENDS SCREEN -->
@@ -979,61 +1117,86 @@
             </div>
         </div>
 
-        <!-- PLAY SCREEN - Find Match -->
+        <!-- LOBBIES SCREEN -->
         <div id="lobbies-screen" class="screen">
             <div class="top-bar">
-                <button class="btn" onclick="cancelSearchAndGoHome()" style="font-size: 6px; padding: 8px;">← MENU</button>
-                <span class="pink" style="font-size: 8px;">PLAY</span>
+                <button class="btn" onclick="showScreen('home')" style="font-size: 6px; padding: 8px;">← MENU</button>
+                <div class="wallet-display">$<span id="play-wallet2">0.00</span></div>
             </div>
 
-            <!-- Find Match Section -->
-            <div class="panel mb-12">
-                <div class="panel-title">⚡ FIND MATCH</div>
-                <p class="muted mb-8" style="font-size: 6px;">Auto-match with a player at the same stake</p>
-                <div class="flex gap-8 items-center mb-8">
-                    <span class="muted" style="font-size: 7px;">STAKE:</span>
-                    <select id="find-match-stake" class="input" style="width: auto; font-size: 10px; padding: 10px;">
-                        <option value="0.25">25¢</option>
-                        <option value="0.50">50¢</option>
-                        <option value="1" selected>$1</option>
-                        <option value="2">$2</option>
-                        <option value="5">$5</option>
-                        <option value="10">$10</option>
-                    </select>
-                </div>
-                <button class="btn primary" id="find-match-btn" onclick="findMatch()" style="width: 100%;">FIND MATCH</button>
-            </div>
-
-            <!-- Create Lobby Section -->
-            <div class="panel mb-12">
-                <div class="panel-title">🏠 CREATE LOBBY</div>
-                <p class="muted mb-8" style="font-size: 6px;">Create a lobby and share the code with a friend</p>
-                <div class="flex gap-8 items-center">
-                    <select id="create-stake" class="input" style="width: auto; font-size: 8px; padding: 8px;">
-                        <option value="0.25">25¢</option>
-                        <option value="0.50">50¢</option>
-                        <option value="1" selected>$1</option>
-                        <option value="2">$2</option>
-                        <option value="5">$5</option>
-                        <option value="10">$10</option>
-                    </select>
-                    <button class="btn green" onclick="createLobby()">CREATE</button>
+            <!-- Find Match + Create/Join Row -->
+            <div class="flex gap-4 mb-4">
+                <!-- Find Match -->
+                <div class="panel flex-1" style="padding: 8px;">
+                    <div class="flex gap-4 items-center">
+                        <select id="find-match-stake" class="input" style="width: 55px; font-size: 7px; padding: 6px;">
+                            <option value="0.25">25¢</option>
+                            <option value="0.50">50¢</option>
+                            <option value="1" selected>$1</option>
+                            <option value="5">$5</option>
+                            <option value="10">$10</option>
+                        </select>
+                        <button class="btn primary" id="find-match-btn" onclick="findMatch()" style="flex: 1; padding: 10px; font-size: 7px;">FIND MATCH</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Join Lobby Section -->
-            <div class="panel mb-12">
-                <div class="panel-title">🔗 JOIN LOBBY</div>
-                <div class="flex gap-8">
-                    <input type="text" class="input" id="lobby-code-input" placeholder="CODE" maxlength="4" style="text-transform: uppercase; font-size: 14px; text-align: center; letter-spacing: 4px; width: 120px;">
-                    <button class="btn" onclick="joinLobby()">JOIN</button>
+            <div class="flex gap-4 mb-4">
+                <!-- Create Lobby -->
+                <div class="panel flex-1" style="padding: 8px;">
+                    <div class="panel-title" style="font-size: 6px; margin-bottom: 4px;">CREATE LOBBY</div>
+                    <div class="flex gap-4 items-center">
+                        <select id="create-stake" class="input" style="width: 50px; font-size: 6px; padding: 5px;">
+                            <option value="0.25">25¢</option>
+                            <option value="0.50">50¢</option>
+                            <option value="1" selected>$1</option>
+                            <option value="5">$5</option>
+                            <option value="10">$10</option>
+                        </select>
+                        <button class="btn green" onclick="createLobby()" style="font-size: 5px; padding: 6px 10px;">CREATE</button>
+                    </div>
+                </div>
+                <!-- Join by Code -->
+                <div class="panel flex-1" style="padding: 8px;">
+                    <div class="panel-title" style="font-size: 6px; margin-bottom: 4px;">JOIN CODE</div>
+                    <div class="flex gap-4">
+                        <input type="text" class="input" id="lobby-code-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-size: 8px; text-align: center; letter-spacing: 2px; width: 60px; padding: 5px;">
+                        <button class="btn" onclick="joinLobby()" style="font-size: 5px; padding: 6px 10px;">JOIN</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Active Lobbies List -->
-            <div class="panel-title">📋 ACTIVE LOBBIES</div>
-            <div id="lobby-list" style="max-height: 150px; overflow-y: auto;">
-                <div class="muted text-center" style="font-size: 7px; padding: 20px;">No open lobbies</div>
+            <!-- Active Lobbies List - Extended -->
+            <div class="panel" style="flex: 1; display: flex; flex-direction: column; min-height: 0; margin-bottom: 8px;">
+                <div class="panel-title" style="font-size: 8px;">OPEN LOBBIES</div>
+                <div id="lobby-list" style="flex: 1; overflow-y: auto; min-height: 150px;">
+                    <!-- Empty state -->
+                    <div class="lobby-empty-state">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🎮</div>
+                        <p style="font-size: 7px; color: #9a8c7a;">No lobbies available</p>
+                        <p style="font-size: 5px; color: #b8a896; margin-top: 4px;">Create one or use Find Match!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Grid - Bottom -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: auto;">
+                <div class="menu-item" onclick="showScreen('wallet')" style="padding: 8px 4px;">
+                    <div class="menu-item-icon" style="font-size: 14px;">💰</div>
+                    <div class="menu-item-label" style="font-size: 4px;">WALLET</div>
+                </div>
+                <div class="menu-item" onclick="showScreen('friends')" style="padding: 8px 4px;">
+                    <div class="menu-item-icon" style="font-size: 14px;">👥</div>
+                    <div class="menu-item-label" style="font-size: 4px;">FRIENDS</div>
+                </div>
+                <div class="menu-item" onclick="showScreen('profile')" style="padding: 8px 4px;">
+                    <div class="menu-item-icon" style="font-size: 14px;">⚙️</div>
+                    <div class="menu-item-label" style="font-size: 4px;">PROFILE</div>
+                </div>
+                <div class="menu-item" onclick="showScreen('leaderboard')" style="padding: 8px 4px;">
+                    <div class="menu-item-icon" style="font-size: 14px;">🏆</div>
+                    <div class="menu-item-label" style="font-size: 4px;">RANKS</div>
+                </div>
             </div>
         </div>
 
@@ -1046,10 +1209,11 @@
 
             <div class="flex-1 flex flex-col items-center justify-center text-center">
                 <div class="panel" style="padding: 30px;">
-                    <div style="font-size: 40px; margin-bottom: 16px;">🔍</div>
+                    <div style="font-size: 40px; margin-bottom: 16px; animation: pulse 1.5s infinite;">🔍</div>
                     <h2 class="gold mb-8">FINDING MATCH</h2>
                     <p class="muted mb-8" style="font-size: 7px;">Stake: $<span id="search-stake">1</span></p>
-                    <p class="cyan" style="font-size: 6px; animation: pulse 1s infinite;">Searching for opponent...</p>
+                    <p class="cyan mb-8" style="font-size: 6px; animation: pulse 1s infinite;">Searching for opponent...</p>
+                    <p class="peach" style="font-size: 8px; font-family: 'Press Start 2P', monospace;" id="search-timer">0:00</p>
                 </div>
             </div>
         </div>
@@ -1171,35 +1335,56 @@
                 <div class="cards-row" id="player-cards"></div>
             </div>
 
-            <div class="panel flex-1 flex flex-col">
-                <div class="panel-title">BATTLE LOG</div>
-                <div class="combat-log" id="combat-log"></div>
+            <!-- Draw Card Button (rate-limited) -->
+            <div class="flex justify-center mb-8">
+                <button class="btn primary" id="draw-card-btn" onclick="manualDraw()" style="font-size: 7px; padding: 10px 20px;">DRAW CARD</button>
+            </div>
+
+            <div class="panel" style="max-height: 80px; overflow: hidden;">
+                <div class="panel-title" style="font-size: 6px; margin-bottom: 4px;">BATTLE LOG</div>
+                <div class="combat-log" id="combat-log" style="max-height: 50px; font-size: 5px;"></div>
+            </div>
+
+            <!-- Ready Overlay -->
+            <div id="ready-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100;">
+                <div class="panel text-center" style="padding: 24px;">
+                    <h2 class="gold mb-12">MATCH READY</h2>
+                    <p class="muted mb-12" style="font-size: 6px;" id="ready-count">0/2 READY</p>
+                    <button class="btn primary" id="ready-btn" onclick="playerReady()" style="font-size: 8px;">START</button>
+                </div>
+            </div>
+
+            <!-- Result Overlay (within match screen) -->
+            <div id="result-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 90;">
+                <div class="panel result-panel text-center" style="padding: 20px;">
+                    <h1 id="result-title" class="result-title green" style="font-size: 16px; margin-bottom: 8px;">VICTORY!</h1>
+                    <p class="gold mb-8" style="font-size: 10px;" id="result-amount">+$1.75</p>
+                    <div class="flex justify-center gap-16 mb-8">
+                        <div class="text-center">
+                            <p class="muted mb-4" style="font-size: 5px;">YOUR HP</p>
+                            <p class="green" style="font-size: 12px;" id="result-player-hp">7</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="muted mb-4" style="font-size: 5px;">ENEMY HP</p>
+                            <p class="red" style="font-size: 12px;" id="result-opponent-hp">0</p>
+                        </div>
+                    </div>
+                    <p id="waiting-text" class="cyan" style="font-size: 5px; margin-bottom: 8px; display: none; animation: pulse 1s infinite;">Waiting for opponent...</p>
+                    <div class="flex gap-8 justify-center">
+                        <button class="btn primary" id="play-again-btn" onclick="playAgain()" style="font-size: 6px; padding: 8px 12px;">PLAY AGAIN</button>
+                        <button class="btn" onclick="returnToMenu()" style="font-size: 6px; padding: 8px 12px;">MENU</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- RESULT SCREEN -->
-        <div id="result-screen" class="screen">
+        <!-- RESULT SCREEN (legacy - keeping for compatibility) -->
+        <div id="result-screen" class="screen" style="display: none !important;">
             <div class="flex-1 flex flex-col items-center justify-center">
                 <div class="panel result-panel mb-16">
-                    <h1 id="result-title" class="result-title green">VICTORY!</h1>
-                    <p class="gold mb-8" style="font-size: 12px;" id="result-amount">+$1.75</p>
-                    <div class="flex justify-center gap-16">
-                        <div class="text-center">
-                            <p class="muted mb-4" style="font-size: 6px;">YOUR HP</p>
-                            <p class="green" style="font-size: 14px;" id="result-player-hp">7</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="muted mb-4" style="font-size: 6px;">ENEMY HP</p>
-                            <p class="red" style="font-size: 14px;" id="result-opponent-hp">0</p>
-                        </div>
-                    </div>
-                    <p id="waiting-text" class="cyan" style="font-size: 6px; margin-top: 12px; display: none; animation: pulse 1s infinite;">Waiting for opponent...</p>
+                    <h1 class="result-title green">VICTORY!</h1>
                 </div>
-
-                <div class="flex gap-12" id="result-buttons">
-                    <button class="btn primary" id="play-again-btn" onclick="playAgain()">PLAY AGAIN</button>
-                    <button class="btn" onclick="returnToMenu()">MENU</button>
-                </div>
+                <div class="flex gap-12">
             </div>
         </div>
     </div>
@@ -1724,7 +1909,8 @@ function renderPixelAvatar(avatarKey, size = 24) {
         shadows.push(`${x}px ${y}px 0 ${color}`);
     }
 
-    return `<div class="pixel-avatar-container"><div class="pixel-avatar" style="width:${pixelSize}px;height:${pixelSize}px;box-shadow:${shadows.join(',')};"></div></div>`;
+    // Container sized to fit the full 8x8 pixel art, avatar positioned at top-left corner
+    return `<div class="pixel-avatar-container" style="width:${size}px;height:${size}px;position:relative;"><div class="pixel-avatar" style="position:absolute;top:0;left:0;width:${pixelSize}px;height:${pixelSize}px;box-shadow:${shadows.join(',')};"></div></div>`;
 }
 
 const OPPONENTS = ['CardShark', 'LuckyLou', 'BettyBets', 'RiskyRick', 'PokerPete', 'SlotsSam', 'DiceyDan', 'ChipChuck'];
@@ -1818,6 +2004,8 @@ function loginAsGuest() {
     G.bankroll = 10; // Starting balance
     // Initialize audio after user interaction
     if (typeof initAudio === 'function') initAudio();
+    // Connect to server immediately
+    connectToServer();
     showScreen('home');
 }
 
@@ -1851,8 +2039,13 @@ function withdraw(amount) {
 }
 
 function withdrawAll() {
-    G.bankroll = 0;
+    G.bankroll = 10; // Reset to starting amount
     updateAllDisplays();
+}
+
+function saveWalletAndReturn() {
+    updateAllDisplays();
+    showScreen('home');
 }
 
 // Profile
@@ -1887,16 +2080,15 @@ function addFriend() {
     }
 }
 
-// Lobbies (placeholder)
-function createLobby() {
-    alert('Lobby creation would open here');
-}
-function refreshLobbies() {
-    alert('Refreshing lobbies...');
-}
+// Lobbies - functions defined in multiplayer section below
 
 // Match
+let soloReadyState = { playerReady: false, botReady: false };
+
 function startMatch(stake) {
+    // Solo mode - not multiplayer
+    isMultiplayer = false;
+
     G.currentStake = stake;
     G.bankroll -= stake;
     rngState = Date.now();
@@ -1913,12 +2105,62 @@ function startMatch(stake) {
     G.matchOver = false;
     G.combatLog = [];
 
-    document.getElementById('match-stake').textContent = '$' + stake + ' MATCH';
-    document.getElementById('opponent-name').textContent = G.opponent.name;
+    document.getElementById('match-stake').textContent = '$' + stake + ' VS BOT';
+    document.getElementById('opponent-name').textContent = G.opponent.name + ' (BOT)';
 
     showScreen('match');
     renderMatch();
-    addLog('Match started vs ' + G.opponent.name, 'info');
+
+    // Solo mode: Show ready overlay with bot auto-ready
+    soloReadyState = { playerReady: false, botReady: false };
+    document.getElementById('ready-overlay').style.display = 'flex';
+    document.getElementById('ready-btn').disabled = false;
+    document.getElementById('ready-btn').textContent = 'START';
+    document.getElementById('ready-count').textContent = '0/2 READY';
+
+    // Bot auto-accepts after a short delay
+    setTimeout(() => {
+        soloReadyState.botReady = true;
+        updateSoloReadyCount();
+    }, 500);
+}
+
+function updateSoloReadyCount() {
+    const count = (soloReadyState.playerReady ? 1 : 0) + (soloReadyState.botReady ? 1 : 0);
+    document.getElementById('ready-count').textContent = count + '/2 READY';
+
+    // Both ready - start the match!
+    if (count === 2) {
+        setTimeout(() => {
+            document.getElementById('ready-overlay').style.display = 'none';
+            if (typeof playSound === 'function') playSound('matchFound');
+            addLog('Match started vs ' + G.opponent.name, 'info');
+            // Start auto-draw for solo mode
+            startSoloAutoDraw();
+        }, 300);
+    }
+}
+
+function soloPlayerReady() {
+    if (!soloReadyState.playerReady) {
+        soloReadyState.playerReady = true;
+        document.getElementById('ready-btn').disabled = true;
+        document.getElementById('ready-btn').textContent = 'WAITING...';
+        updateSoloReadyCount();
+    }
+}
+
+// Auto-draw for solo mode
+let soloAutoDrawTimer = null;
+function startSoloAutoDraw() {
+    soloAutoDrawTimer = setTimeout(() => {
+        if (!G.matchOver) {
+            revealNextCards();
+            if (!G.matchOver) {
+                startSoloAutoDraw();
+            }
+        }
+    }, 3000);
 }
 
 function renderMatch() {
@@ -2062,6 +2304,12 @@ function addLog(msg, type) {
 }
 
 function endMatch() {
+    // Clear solo auto-draw timer
+    if (soloAutoDrawTimer) {
+        clearTimeout(soloAutoDrawTimer);
+        soloAutoDrawTimer = null;
+    }
+
     // Tie? Draw another card each
     if (G.player.hp === G.opponent.hp && G.player.hp > 0) {
         addLog('=== TIE! Extra card! ===', 'special');
@@ -2107,11 +2355,14 @@ function endMatch() {
         document.getElementById('result-amount').textContent = G.playerWon ? '+$' + winnings.toFixed(2) : '-$' + G.currentStake.toFixed(2);
         document.getElementById('result-player-hp').textContent = Math.max(0, G.player.hp);
         document.getElementById('result-opponent-hp').textContent = Math.max(0, G.opponent.hp);
-        showScreen('result');
+        // Show result overlay (game still visible behind)
+        document.getElementById('result-overlay').style.display = 'flex';
     }, 1000);
 }
 
 function playAgain() {
+    // Hide result overlay
+    document.getElementById('result-overlay').style.display = 'none';
     startMatch(G.currentStake);
 }
 
@@ -2120,11 +2371,17 @@ document.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         const match = document.getElementById('match-screen');
-        const result = document.getElementById('result-screen');
-        if (match.classList.contains('active') && !G.matchOver) {
-            revealNextCards();
-        } else if (result.classList.contains('active')) {
-            playAgain();
+        const resultOverlay = document.getElementById('result-overlay');
+        const readyOverlay = document.getElementById('ready-overlay');
+
+        if (match.classList.contains('active')) {
+            if (resultOverlay.style.display === 'flex') {
+                playAgain();
+            } else if (readyOverlay.style.display === 'flex') {
+                playerReady();
+            } else if (!G.matchOver) {
+                manualDraw();
+            }
         }
     }
 });
@@ -2140,6 +2397,57 @@ document.getElementById('login-duck').innerHTML = renderPixelAvatar('duck', 28);
 document.getElementById('menu-bird').innerHTML = renderPixelAvatar('bird', 28);
 document.getElementById('menu-duck').innerHTML = renderPixelAvatar('duck', 28);
 
+// Initialize animated pixel scenes
+function initAnimatedScenes() {
+    // Running animals near Find Match
+    document.getElementById('home-runner-1').innerHTML = renderPixelAvatar('dog', 20);
+    document.getElementById('home-runner-2').innerHTML = renderPixelAvatar('cat', 20);
+
+    // Boat scene - fox on a boat
+    const boatScene = document.getElementById('boat-scene');
+    if (boatScene) {
+        boatScene.innerHTML = `
+            <div style="position: relative;">
+                <div style="position: absolute; bottom: 0; width: 28px; height: 10px; background: #8B4513; border-radius: 0 0 4px 4px;"></div>
+                <div style="position: absolute; bottom: 8px; left: 6px;">${renderPixelAvatar('fox', 16)}</div>
+            </div>
+        `;
+    }
+
+    // Car scene - bear in a car
+    const carScene = document.getElementById('car-scene');
+    if (carScene) {
+        carScene.innerHTML = `
+            <div style="position: relative;">
+                <div style="position: absolute; bottom: 0; width: 30px; height: 12px; background: #e05d5d; border-radius: 2px;"></div>
+                <div style="position: absolute; bottom: 0; left: 2px; width: 6px; height: 6px; background: #333; border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: 0; left: 22px; width: 6px; height: 6px; background: #333; border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: 8px; left: 8px;">${renderPixelAvatar('bear', 12)}</div>
+            </div>
+        `;
+    }
+
+    // Flying scene - bird flying
+    const flyingScene = document.getElementById('flying-scene');
+    if (flyingScene) {
+        flyingScene.innerHTML = renderPixelAvatar('owl', 16);
+    }
+}
+
+// Initialize bot character on play screen
+function initBotCharacter() {
+    const botEl = document.getElementById('bot-character');
+    if (botEl) {
+        botEl.innerHTML = renderPixelAvatar('monkey', 40);
+    }
+}
+
+// Call after DOM is ready
+setTimeout(() => {
+    initAnimatedScenes();
+    initBotCharacter();
+}, 100);
+
 // ============================================================================
 // MULTIPLAYER
 // ============================================================================
@@ -2149,6 +2457,26 @@ let isMultiplayer = false;
 let currentLobbyCode = null;
 let myPlayerId = null;
 let currentMatch = null;
+let searchTimerInterval = null;
+let searchStartTime = null;
+
+function startSearchTimer() {
+    searchStartTime = Date.now();
+    document.getElementById('search-timer').textContent = '0:00';
+    searchTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - searchStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        document.getElementById('search-timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }, 1000);
+}
+
+function stopSearchTimer() {
+    if (searchTimerInterval) {
+        clearInterval(searchTimerInterval);
+        searchTimerInterval = null;
+    }
+}
 let currentSearchStake = null;
 let waitingForRematch = false;
 
@@ -2205,16 +2533,21 @@ function connectToServer() {
         currentSearchStake = data.stake;
         document.getElementById('search-stake').textContent = data.stake;
         showScreen('searching');
+        startSearchTimer();
     });
 
     socket.on('searchCancelled', () => {
         currentSearchStake = null;
+        stopSearchTimer();
         showScreen('lobbies');
     });
 
     // Match found via matchmaking
     socket.on('matchFound', (data) => {
         console.log('Match found!', data);
+        stopSearchTimer();
+        // Play match found sound
+        if (typeof playSound === 'function') playSound('matchFound');
     });
 
     socket.on('matchStart', (data) => {
@@ -2227,6 +2560,11 @@ function connectToServer() {
         document.getElementById('match-stake').textContent = '$' + data.stake + ' MATCH';
         document.getElementById('waiting-text').style.display = 'none';
         document.getElementById('play-again-btn').disabled = false;
+        // Show ready overlay and reset ready button
+        document.getElementById('ready-overlay').style.display = 'flex';
+        document.getElementById('ready-btn').disabled = false;
+        document.getElementById('ready-btn').textContent = 'START';
+        document.getElementById('ready-count').textContent = '0/2 READY';
         updateAllDisplays();
     });
 
@@ -2258,6 +2596,21 @@ function connectToServer() {
         waitingForRematch = false;
         showScreen('lobbies');
     });
+
+    // Ready system
+    socket.on('readyUpdate', (data) => {
+        document.getElementById('ready-count').textContent = data.readyCount + '/2 READY';
+        if (data.youReady) {
+            document.getElementById('ready-btn').disabled = true;
+            document.getElementById('ready-btn').textContent = 'WAITING...';
+        }
+    });
+
+    socket.on('matchBegin', () => {
+        // Hide ready overlay, match is starting
+        document.getElementById('ready-overlay').style.display = 'none';
+        if (typeof playSound === 'function') playSound('matchFound');
+    });
 }
 
 function updateConnectionStatus(connected) {
@@ -2275,19 +2628,31 @@ function updateConnectionStatus(connected) {
 function renderLobbyList(lobbies) {
     const container = document.getElementById('lobby-list');
     if (lobbies.length === 0) {
-        container.innerHTML = '<div class="muted text-center" style="font-size: 7px; padding: 20px;">No open lobbies. Create one!</div>';
+        container.innerHTML = `
+            <div class="lobby-empty-state">
+                <div style="font-size: 24px; margin-bottom: 8px;">🎮</div>
+                <p style="font-size: 7px; color: #9a8c7a;">No lobbies available</p>
+                <p style="font-size: 5px; color: #b8a896; margin-top: 4px;">Create one or use Find Match!</p>
+            </div>
+        `;
         return;
     }
-    container.innerHTML = lobbies.map(l => `
-        <div class="lobby-item">
-            <div class="lobby-info">
-                <div class="lobby-name">Lobby ${l.code}</div>
-                <div class="lobby-details">$${l.stake} • Host: ${l.host}</div>
+    container.innerHTML = lobbies.map(l => {
+        const stakeDisplay = l.stake < 1 ? (l.stake * 100) + '¢' : '$' + l.stake;
+        return `
+            <div class="lobby-item">
+                <div class="lobby-avatar">${renderPixelAvatar(l.hostAvatar || 'rabbit', 28)}</div>
+                <div class="lobby-info">
+                    <div class="lobby-host">${l.host}</div>
+                    <div class="flex items-center gap-8">
+                        <span class="lobby-stake">${stakeDisplay}</span>
+                        <span class="lobby-code">${l.code}</span>
+                    </div>
+                </div>
+                <button class="btn lobby-join-btn" onclick="joinLobbyByCode('${l.code}')">JOIN</button>
             </div>
-            <div class="lobby-players">${l.players}/2</div>
-            <button class="btn" style="font-size: 6px; padding: 8px; margin-left: 10px;" onclick="joinLobbyByCode('${l.code}')">JOIN</button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderWaitingPlayers(players) {
@@ -2333,7 +2698,7 @@ function leaveLobby() {
         socket.emit('leaveLobby', { code: currentLobbyCode });
     }
     currentLobbyCode = null;
-    showScreen('lobbies');
+    showScreen('home');
 }
 
 function findMatch() {
@@ -2345,12 +2710,45 @@ function findMatch() {
     socket.emit('findMatch', { stake });
 }
 
+// Home screen stake selection
+let selectedHomeStake = 1;
+
+function selectHomeStake(amount) {
+    selectedHomeStake = amount;
+    document.querySelectorAll('#home-screen .stake-btn').forEach(btn => {
+        btn.classList.toggle('selected', parseFloat(btn.dataset.stake) === amount);
+    });
+}
+
+function findMatchFromHome() {
+    // Connect to server if not already connected
+    if (!socket || !socket.connected) {
+        connectToServer();
+        // Wait for connection then search (with retry)
+        let attempts = 0;
+        const tryConnect = () => {
+            attempts++;
+            if (socket && socket.connected) {
+                socket.emit('findMatch', { stake: selectedHomeStake });
+            } else if (attempts < 5) {
+                setTimeout(tryConnect, 300);
+            } else {
+                alert('Could not connect to server. Check your connection and try again.');
+            }
+        };
+        setTimeout(tryConnect, 300);
+    } else {
+        socket.emit('findMatch', { stake: selectedHomeStake });
+    }
+}
+
 function cancelSearch() {
     if (socket) {
         socket.emit('cancelSearch');
     }
     currentSearchStake = null;
-    showScreen('lobbies');
+    stopSearchTimer();
+    showScreen('home');
 }
 
 function cancelSearchAndGoHome() {
@@ -2361,13 +2759,48 @@ function cancelSearchAndGoHome() {
     showScreen('home');
 }
 
+// Player ready for match start
+function playerReady() {
+    if (isMultiplayer && socket) {
+        socket.emit('playerReady');
+    } else {
+        // Solo mode
+        soloPlayerReady();
+    }
+}
+
+// Manual draw with rate limiting (1 per second)
+let lastDrawTime = 0;
+function manualDraw() {
+    const now = Date.now();
+    if (now - lastDrawTime < 1000) {
+        // Rate limited - less than 1 second since last draw
+        return;
+    }
+    lastDrawTime = now;
+
+    // For single player, call revealNextCards
+    if (!isMultiplayer) {
+        revealNextCards();
+    }
+    // For multiplayer, server handles auto-draw so this is just visual feedback
+}
+
 function returnToMenu() {
     if (socket) {
         socket.emit('returnToMenu');
     }
     isMultiplayer = false;
     waitingForRematch = false;
-    showScreen('lobbies');
+    // Clear solo auto-draw timer
+    if (soloAutoDrawTimer) {
+        clearTimeout(soloAutoDrawTimer);
+        soloAutoDrawTimer = null;
+    }
+    // Hide overlays
+    document.getElementById('result-overlay').style.display = 'none';
+    document.getElementById('ready-overlay').style.display = 'none';
+    showScreen('home');
 }
 
 function renderMultiplayerMatch(match, myId) {
@@ -2425,7 +2858,7 @@ function renderMultiplayerMatch(match, myId) {
             G.losses++;
         }
 
-        // Show result after delay
+        // Show result overlay after delay (game still visible behind)
         setTimeout(() => {
             document.getElementById('result-title').textContent = G.playerWon ? 'VICTORY!' : 'DEFEAT';
             document.getElementById('result-title').className = 'result-title ' + (G.playerWon ? 'green' : 'red');
@@ -2435,7 +2868,7 @@ function renderMultiplayerMatch(match, myId) {
             document.getElementById('waiting-text').style.display = 'none';
             document.getElementById('play-again-btn').disabled = false;
             document.getElementById('play-again-btn').textContent = 'PLAY AGAIN';
-            showScreen('result');
+            document.getElementById('result-overlay').style.display = 'flex';
         }, 1500);
     }
 
@@ -2465,6 +2898,9 @@ revealNextCards = function() {
 // Override playAgain for multiplayer
 const originalPlayAgain = playAgain;
 playAgain = function() {
+    // Hide result overlay
+    document.getElementById('result-overlay').style.display = 'none';
+
     if (isMultiplayer && socket) {
         socket.emit('playAgain');
         G.matchOver = false;
@@ -2473,11 +2909,11 @@ playAgain = function() {
     }
 };
 
-// Connect when entering lobbies screen
+// Connect when entering lobbies or home screen
 const originalShowScreen = showScreen;
 showScreen = function(id) {
     originalShowScreen(id);
-    if (id === 'lobbies') {
+    if (id === 'lobbies' || id === 'home') {
         connectToServer();
     }
 };

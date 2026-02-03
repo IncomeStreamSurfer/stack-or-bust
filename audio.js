@@ -205,6 +205,64 @@ function playClickSound() {
     oscillator.stop(audioContext.currentTime + 0.08);
 }
 
+// Match found - exciting fanfare sound
+function playMatchFoundSound() {
+    if (!audioInitialized || !audioContext || isMuted) return;
+
+    // Exciting ascending fanfare
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+
+    notes.forEach((freq, i) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+
+        const startTime = audioContext.currentTime + i * 0.1;
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(SFX_VOLUME * 0.3, startTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + 0.2);
+    });
+
+    // Add a triumphant chord at the end
+    setTimeout(() => {
+        [523.25, 659.25, 783.99].forEach(freq => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+
+            gain.gain.setValueAtTime(SFX_VOLUME * 0.25, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.4);
+        });
+    }, 500);
+}
+
+// Sound dispatcher
+function playSound(soundName) {
+    switch(soundName) {
+        case 'cardDraw': playCardDrawSound(); break;
+        case 'win': playWinSound(); break;
+        case 'lose': playLoseSound(); break;
+        case 'click': playClickSound(); break;
+        case 'matchFound': playMatchFoundSound(); break;
+    }
+}
+
 // Add click sound to all buttons
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
