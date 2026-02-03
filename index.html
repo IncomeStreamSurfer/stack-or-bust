@@ -674,6 +674,41 @@
         .sparkle:nth-child(1) { left: 15%; top: 5px; animation-delay: 0s; }
         .sparkle:nth-child(2) { right: 15%; top: 8px; animation-delay: 0.7s; }
         .sparkle:nth-child(3) { left: 25%; top: 15px; animation-delay: 1.4s; }
+
+        /* ========================================
+           PIXEL ART AVATARS
+           ======================================== */
+        .pixel-avatar {
+            display: inline-block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .pixel-avatar-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff5ed;
+            border: 2px solid #ffcdb8;
+            border-radius: 4px;
+            padding: 2px;
+        }
+        .avatar-option .pixel-avatar-container {
+            transform: scale(0.7);
+        }
+        .avatar-option.selected .pixel-avatar-container {
+            border-color: #e07a5f;
+            background: #ffe8dd;
+        }
+        .selected-avatar-display .pixel-avatar-container {
+            transform: scale(1.5);
+            border-width: 3px;
+        }
+        .user-avatar .pixel-avatar-container {
+            transform: scale(0.8);
+            border: none;
+            background: transparent;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -698,7 +733,7 @@
                     <!-- Avatar & Nickname Setup -->
                     <div class="login-setup">
                         <div class="login-setup-title">CHOOSE YOUR AVATAR</div>
-                        <div class="selected-avatar-display" id="login-selected-avatar">🐰</div>
+                        <div class="selected-avatar-display" id="login-selected-avatar"></div>
                         <div class="avatar-grid-small" id="login-avatar-grid"></div>
 
                         <div class="login-setup-title" style="margin-top: 12px;">ENTER NICKNAME</div>
@@ -720,20 +755,20 @@
 
                     <div class="character bird-character">
                         <div class="speech-bubble">Let's play!</div>
-                        <div class="character-emoji">🐦</div>
+                        <div class="character-emoji" id="login-bird"></div>
                     </div>
 
                     <div class="card-table">
                         <div class="table-surface">
-                            <div class="mini-card">*</div>
+                            <div class="mini-card">♠</div>
                             <div class="mini-card back"></div>
-                            <div class="mini-card">*</div>
+                            <div class="mini-card">♥</div>
                         </div>
                     </div>
 
                     <div class="character duck-character">
                         <div class="speech-bubble">Quack!</div>
-                        <div class="character-emoji">🦆</div>
+                        <div class="character-emoji" id="login-duck"></div>
                     </div>
                 </div>
 
@@ -789,29 +824,29 @@
 
             <!-- Cute Bird & Duck Playing Cards -->
             <div class="cute-characters">
-                <span class="sparkle">*</span>
-                <span class="sparkle">*</span>
-                <span class="sparkle">*</span>
+                <span class="sparkle">✦</span>
+                <span class="sparkle">✦</span>
+                <span class="sparkle">✦</span>
 
                 <!-- Bird character -->
                 <div class="character bird-character">
                     <div class="speech-bubble">Your turn!</div>
-                    <div class="character-emoji">🐦</div>
+                    <div class="character-emoji" id="menu-bird"></div>
                 </div>
 
                 <!-- Card table -->
                 <div class="card-table">
                     <div class="table-surface">
-                        <div class="mini-card">*</div>
+                        <div class="mini-card">♠</div>
                         <div class="mini-card back"></div>
-                        <div class="mini-card">*</div>
+                        <div class="mini-card">♥</div>
                     </div>
                 </div>
 
                 <!-- Duck character -->
                 <div class="character duck-character">
                     <div class="speech-bubble">Quack!</div>
-                    <div class="character-emoji">🦆</div>
+                    <div class="character-emoji" id="menu-duck"></div>
                 </div>
             </div>
         </div>
@@ -1101,68 +1136,523 @@
 // STACK OR BUST v2.0 - Simplified & Clean
 // ============================================================================
 
-// 40+ Cute Pixel Art Style Animal Avatars
-const AVATARS = [
-    // Mammals - Cute & Fluffy
-    '🐰', // rabbit
-    '🦊', // fox
-    '🐻', // bear
-    '🐶', // dog
-    '🐱', // cat
-    '🐵', // monkey
-    '🐿️', // squirrel
-    '🐹', // hamster
-    '🐭', // mouse
-    '🦝', // raccoon
-    '🦦', // otter
-    '🦔', // hedgehog
-    '🐺', // wolf
-    '🦌', // deer
-    '🐨', // koala
-    '🐼', // panda
-    '🦁', // lion
-    '🐯', // tiger
-    '🐻‍❄️', // polar bear
-    '🦊', // red panda (using fox variant)
+// 40+ Cute Pixel Art Animals - 8x8 pixel grids
+// Format: [name, colors array (row by row, 0=transparent)]
+const PIXEL_AVATARS = {
+    rabbit: {name:'Rabbit', c:['#fff','#ffc0cb','#333'], p:[
+        0,0,1,0,0,1,0,0,
+        0,0,1,0,0,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    fox: {name:'Fox', c:['#ff6b35','#fff','#333'], p:[
+        1,1,0,0,0,0,1,1,
+        1,1,1,0,0,1,1,1,
+        0,1,1,1,1,1,1,0,
+        0,1,2,1,1,2,1,0,
+        0,2,1,3,3,1,2,0,
+        0,0,2,2,2,2,0,0,
+        0,0,0,2,2,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    bear: {name:'Bear', c:['#8B4513','#d2691e','#333'], p:[
+        0,1,0,0,0,0,1,0,
+        1,2,1,1,1,1,2,1,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0
+    ]},
+    dog: {name:'Dog', c:['#deb887','#8B4513','#333'], p:[
+        2,2,0,0,0,0,2,2,
+        2,1,1,1,1,1,1,2,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,3,3,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    cat: {name:'Cat', c:['#808080','#ffc0cb','#333'], p:[
+        1,1,0,0,0,0,1,1,
+        1,1,1,1,1,1,1,1,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    monkey: {name:'Monkey', c:['#8B4513','#deb887','#333'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        2,1,1,1,1,1,1,2,
+        2,2,3,2,2,3,2,2,
+        0,2,2,2,2,2,2,0,
+        0,0,2,1,1,2,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    hamster: {name:'Hamster', c:['#deb887','#fff','#333','#ffc0cb'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        4,1,2,1,1,2,1,4,
+        1,1,3,1,1,3,1,1,
+        0,1,1,4,4,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    mouse: {name:'Mouse', c:['#a0a0a0','#ffc0cb','#333'], p:[
+        0,1,0,0,0,0,1,0,
+        1,2,1,0,0,1,2,1,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    raccoon: {name:'Raccoon', c:['#808080','#333','#fff'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,2,3,2,2,3,2,0,
+        0,1,2,1,1,2,1,0,
+        0,3,1,2,2,1,3,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    hedgehog: {name:'Hedgehog', c:['#8B4513','#deb887','#333'], p:[
+        0,1,1,1,1,1,1,0,
+        1,1,1,1,1,1,1,1,
+        1,1,2,2,2,2,1,1,
+        0,2,3,2,2,3,2,0,
+        0,0,2,2,2,2,0,0,
+        0,0,0,2,2,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    wolf: {name:'Wolf', c:['#696969','#a9a9a9','#333'], p:[
+        1,1,0,0,0,0,1,1,
+        1,2,1,1,1,1,2,1,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,2,1,1,1,1,2,0,
+        0,0,1,3,3,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    deer: {name:'Deer', c:['#deb887','#8B4513','#333'], p:[
+        2,0,0,0,0,0,0,2,
+        2,2,0,0,0,0,2,2,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,1,1,1,1,0,
+        0,0,1,2,2,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    koala: {name:'Koala', c:['#808080','#333','#fff'], p:[
+        1,1,0,0,0,0,1,1,
+        1,3,1,1,1,1,3,1,
+        0,1,1,1,1,1,1,0,
+        0,1,2,1,1,2,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    panda: {name:'Panda', c:['#fff','#333'], p:[
+        2,2,0,0,0,0,2,2,
+        2,1,1,1,1,1,1,2,
+        0,1,1,1,1,1,1,0,
+        0,2,2,1,1,2,2,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    lion: {name:'Lion', c:['#daa520','#8B4513','#333'], p:[
+        0,2,2,2,2,2,2,0,
+        2,1,1,1,1,1,1,2,
+        2,1,1,1,1,1,1,2,
+        2,1,3,1,1,3,1,2,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    tiger: {name:'Tiger', c:['#ffa500','#333'], p:[
+        2,0,2,0,0,2,0,2,
+        0,1,1,1,1,1,1,0,
+        2,1,2,1,1,2,1,2,
+        0,1,2,1,1,2,1,0,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    polarbear: {name:'Polar Bear', c:['#fff','#333','#ffc0cb'], p:[
+        0,1,0,0,0,0,1,0,
+        1,1,1,1,1,1,1,1,
+        0,1,1,1,1,1,1,0,
+        0,1,2,1,1,2,1,0,
+        0,1,1,3,3,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0
+    ]},
+    bird: {name:'Bird', c:['#4169e1','#ffa500','#333','#fff'], p:[
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,4,4,1,1,0,
+        0,1,3,1,1,3,1,0,
+        2,1,1,1,1,1,1,2,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,2,0,0,2,0,0
+    ]},
+    duck: {name:'Duck', c:['#fff','#ffa500','#333'], p:[
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        2,2,1,1,1,1,2,2,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,2,0,0,2,0,0
+    ]},
+    owl: {name:'Owl', c:['#8B4513','#fff','#333','#ffa500'], p:[
+        0,1,1,1,1,1,1,0,
+        1,2,2,1,1,2,2,1,
+        1,2,3,2,2,3,2,1,
+        0,1,1,4,4,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,0,1,0,0,1,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    penguin: {name:'Penguin', c:['#333','#fff','#ffa500'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,2,1,1,2,1,0,
+        1,1,1,1,1,1,1,1,
+        1,2,2,3,3,2,2,1,
+        0,1,2,2,2,2,1,0,
+        0,0,1,2,2,1,0,0,
+        0,0,3,0,0,3,0,0
+    ]},
+    chick: {name:'Chick', c:['#ffff00','#ffa500','#333'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,2,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,2,0,0,2,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    fish: {name:'Fish', c:['#4169e1','#87ceeb','#333'], p:[
+        0,0,0,0,0,0,0,0,
+        0,0,0,1,1,0,0,0,
+        1,0,1,2,2,1,1,0,
+        1,1,1,3,1,1,2,1,
+        1,1,1,1,1,1,2,1,
+        1,0,1,2,2,1,1,0,
+        0,0,0,1,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    dolphin: {name:'Dolphin', c:['#4682b4','#b0c4de','#333'], p:[
+        0,0,0,1,0,0,0,0,
+        0,0,1,1,1,0,0,0,
+        0,1,1,1,1,1,0,0,
+        1,2,3,1,1,1,1,1,
+        0,2,2,1,1,1,1,0,
+        0,0,2,1,0,0,0,0,
+        0,0,0,0,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    whale: {name:'Whale', c:['#4169e1','#87ceeb','#333'], p:[
+        0,0,0,0,0,0,0,0,
+        0,1,1,1,1,1,0,0,
+        1,1,3,1,1,1,1,0,
+        1,2,2,1,1,1,1,1,
+        1,2,2,1,1,1,1,1,
+        0,1,1,1,1,1,0,0,
+        0,0,0,0,0,1,1,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    octopus: {name:'Octopus', c:['#da70d6','#fff','#333'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,2,1,1,2,1,0,
+        0,1,3,1,1,3,1,0,
+        0,0,1,1,1,1,0,0,
+        0,1,0,1,1,0,1,0,
+        1,0,1,0,0,1,0,1,
+        0,1,0,1,1,0,1,0
+    ]},
+    crab: {name:'Crab', c:['#ff6347','#fff','#333'], p:[
+        1,0,0,0,0,0,0,1,
+        0,1,0,0,0,0,1,0,
+        0,0,1,1,1,1,0,0,
+        1,1,3,1,1,3,1,1,
+        1,1,1,1,1,1,1,1,
+        0,0,1,1,1,1,0,0,
+        0,1,0,0,0,0,1,0,
+        1,0,0,0,0,0,0,1
+    ]},
+    turtle: {name:'Turtle', c:['#228b22','#8B4513','#333'], p:[
+        0,0,0,2,2,0,0,0,
+        0,0,2,2,2,2,0,0,
+        0,1,1,1,1,1,1,0,
+        2,1,1,1,1,1,1,2,
+        2,1,1,1,1,1,1,2,
+        0,1,1,1,1,1,1,0,
+        0,0,2,0,0,2,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    frog: {name:'Frog', c:['#32cd32','#fff','#333'], p:[
+        0,2,2,0,0,2,2,0,
+        0,2,3,2,2,3,2,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,1,0,0,0,0,1,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    bee: {name:'Bee', c:['#ffd700','#333','#fff'], p:[
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,3,2,1,1,2,3,0,
+        0,3,1,2,2,1,3,0,
+        0,0,1,1,1,1,0,0,
+        0,0,2,1,1,2,0,0,
+        0,0,0,2,2,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    butterfly: {name:'Butterfly', c:['#ff69b4','#9370db','#333'], p:[
+        1,1,0,0,0,0,2,2,
+        1,1,1,0,0,2,2,2,
+        1,1,1,3,3,2,2,2,
+        0,1,0,3,3,0,2,0,
+        0,1,0,3,3,0,2,0,
+        1,1,1,3,3,2,2,2,
+        1,1,1,0,0,2,2,2,
+        1,1,0,0,0,0,2,2
+    ]},
+    ladybug: {name:'Ladybug', c:['#ff0000','#333'], p:[
+        0,0,2,2,2,2,0,0,
+        0,2,1,2,2,1,2,0,
+        2,1,2,1,1,2,1,2,
+        2,1,1,2,2,1,1,2,
+        2,2,1,1,1,1,2,2,
+        2,1,2,1,1,2,1,2,
+        0,2,1,1,1,1,2,0,
+        0,0,2,2,2,2,0,0
+    ]},
+    snail: {name:'Snail', c:['#8B4513','#deb887','#333'], p:[
+        0,0,0,0,0,0,0,0,
+        0,0,0,1,1,1,0,0,
+        0,2,1,2,2,1,1,0,
+        0,0,1,2,2,1,1,0,
+        0,0,0,1,1,1,0,0,
+        0,2,2,2,2,2,2,0,
+        2,3,2,2,2,2,2,2,
+        0,0,0,0,0,0,0,0
+    ]},
+    elephant: {name:'Elephant', c:['#808080','#333','#ffc0cb'], p:[
+        0,0,0,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        1,1,2,1,1,2,1,1,
+        1,1,1,1,1,1,1,1,
+        0,1,1,1,1,1,1,0,
+        0,1,0,0,0,0,1,0,
+        0,1,0,0,0,0,1,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    giraffe: {name:'Giraffe', c:['#daa520','#8B4513','#333'], p:[
+        0,2,0,0,0,2,0,0,
+        0,1,1,1,1,1,0,0,
+        0,1,3,1,1,3,1,0,
+        0,0,1,2,1,1,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,2,1,2,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,1,0,1,0,0,0
+    ]},
+    hippo: {name:'Hippo', c:['#808080','#a9a9a9','#333'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        2,2,1,1,1,1,2,2,
+        2,2,1,1,1,1,2,2,
+        0,0,1,1,1,1,0,0,
+        0,1,0,0,0,0,1,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    swan: {name:'Swan', c:['#fff','#ffa500','#333'], p:[
+        0,0,0,0,1,0,0,0,
+        0,0,0,1,3,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,0,1,1,1,1,0,0,
+        0,0,2,0,0,2,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    squirrel: {name:'Squirrel', c:['#8B4513','#deb887','#333'], p:[
+        0,0,0,0,0,1,1,1,
+        0,1,1,1,0,0,1,1,
+        0,1,2,1,1,1,0,0,
+        0,1,3,1,1,3,1,0,
+        0,1,1,2,1,1,0,0,
+        0,0,1,1,1,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,1,0,1,0,0,0
+    ]},
+    otter: {name:'Otter', c:['#8B4513','#deb887','#333'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,3,1,1,3,1,0,
+        0,2,1,2,2,1,2,0,
+        0,0,2,2,2,2,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    shark: {name:'Shark', c:['#4682b4','#fff','#333'], p:[
+        0,0,0,1,0,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        1,2,3,1,1,1,1,1,
+        0,2,2,1,1,1,1,0,
+        0,0,1,1,0,0,0,0,
+        0,0,0,0,1,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    parrot: {name:'Parrot', c:['#32cd32','#ff0000','#333','#ffa500'], p:[
+        0,0,2,2,2,0,0,0,
+        0,2,1,1,1,2,0,0,
+        0,1,3,1,1,1,0,0,
+        4,4,1,1,1,0,0,0,
+        0,0,1,1,1,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,4,0,4,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    flamingo: {name:'Flamingo', c:['#ff69b4','#333','#ffa500'], p:[
+        0,0,0,1,0,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,2,3,0,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,1,1,1,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,3,0,3,0,0,0
+    ]},
+    snake: {name:'Snake', c:['#32cd32','#228b22','#333','#ff0000'], p:[
+        0,0,0,0,0,0,0,0,
+        0,1,1,0,0,0,0,0,
+        1,3,3,1,0,0,0,0,
+        0,1,4,1,0,0,0,0,
+        0,0,2,1,1,0,0,0,
+        0,0,0,0,2,1,0,0,
+        0,0,0,0,0,2,1,1,
+        0,0,0,0,0,0,0,0
+    ]},
+    lizard: {name:'Lizard', c:['#32cd32','#228b22','#333'], p:[
+        0,0,1,1,0,0,0,0,
+        0,1,3,3,1,0,0,0,
+        2,0,1,1,0,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,0,1,1,1,0,0,
+        0,0,2,0,0,2,0,0,
+        0,0,0,0,0,0,1,1,
+        0,0,0,0,0,0,0,0
+    ]},
+    redpanda: {name:'Red Panda', c:['#cd5c5c','#fff','#333','#8B4513'], p:[
+        1,1,0,0,0,0,1,1,
+        1,2,1,1,1,1,2,1,
+        0,1,2,1,1,2,1,0,
+        0,1,3,1,1,3,1,0,
+        0,2,1,4,4,1,2,0,
+        0,0,1,1,1,1,0,0,
+        0,0,0,1,1,0,0,0,
+        0,0,1,0,0,1,0,0
+    ]},
+    seal: {name:'Seal', c:['#808080','#333','#ffc0cb'], p:[
+        0,0,1,1,1,1,0,0,
+        0,1,1,1,1,1,1,0,
+        0,1,2,1,1,2,1,0,
+        0,1,1,3,3,1,1,0,
+        0,0,1,1,1,1,0,0,
+        1,1,1,1,1,1,1,1,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    kangaroo: {name:'Kangaroo', c:['#deb887','#333','#8B4513'], p:[
+        0,1,0,0,0,0,0,0,
+        1,1,1,0,0,0,0,0,
+        0,1,2,1,1,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,3,1,1,0,0,0,
+        0,0,0,1,0,0,0,0,
+        0,0,1,0,1,0,0,0,
+        0,0,0,0,0,1,1,0
+    ]},
+    camel: {name:'Camel', c:['#deb887','#8B4513','#333'], p:[
+        0,0,0,1,0,1,0,0,
+        0,0,1,1,1,1,1,0,
+        0,0,1,3,1,3,1,0,
+        0,0,0,1,0,1,0,0,
+        0,0,0,2,2,1,0,0,
+        0,0,0,1,0,1,0,0,
+        0,0,1,0,0,0,1,0,
+        0,0,0,0,0,0,0,0
+    ]},
+    llama: {name:'Llama', c:['#fff','#deb887','#333'], p:[
+        0,1,0,0,0,0,0,0,
+        0,1,1,0,0,0,0,0,
+        0,1,3,1,0,0,0,0,
+        0,0,1,1,1,1,0,0,
+        0,0,2,1,1,2,0,0,
+        0,0,0,1,0,1,0,0,
+        0,0,1,0,0,0,1,0,
+        0,0,0,0,0,0,0,0
+    ]}
+};
 
-    // Birds
-    '🐦', // bird
-    '🦆', // duck
-    '🦢', // swan
-    '🦉', // owl
-    '🐧', // penguin
-    '🦜', // parrot
-    '🐤', // baby chick
-    '🦩', // flamingo
+// Array of avatar keys for easy iteration
+const AVATARS = Object.keys(PIXEL_AVATARS);
 
-    // Sea Creatures
-    '🐟', // fish
-    '🐬', // dolphin
-    '🐳', // whale
-    '🐙', // octopus
-    '🦀', // crab
-    '🦭', // seal
-    '🐢', // turtle
-    '🦈', // shark
+// Render pixel art avatar as HTML
+function renderPixelAvatar(avatarKey, size = 24) {
+    const avatar = PIXEL_AVATARS[avatarKey];
+    if (!avatar) return '<span>?</span>';
 
-    // Insects & Small Creatures
-    '🦋', // butterfly
-    '🐝', // bee
-    '🐞', // ladybug
-    '🐸', // frog
-    '🐍', // snake
-    '🦎', // lizard
-    '🐛', // caterpillar
-    '🐌', // snail
+    const pixelSize = size / 8;
+    let shadows = [];
 
-    // Zoo Animals
-    '🐘', // elephant
-    '🦒', // giraffe
-    '🦛', // hippo
-    '🦘', // kangaroo
-    '🐪', // camel
-    '🦙', // llama
-];
+    for (let i = 0; i < 64; i++) {
+        const colorIdx = avatar.p[i];
+        if (colorIdx === 0) continue;
+        const color = avatar.c[colorIdx - 1];
+        const x = (i % 8) * pixelSize;
+        const y = Math.floor(i / 8) * pixelSize;
+        shadows.push(`${x}px ${y}px 0 ${color}`);
+    }
+
+    return `<div class="pixel-avatar-container"><div class="pixel-avatar" style="width:${pixelSize}px;height:${pixelSize}px;box-shadow:${shadows.join(',')};"></div></div>`;
+}
 
 const OPPONENTS = ['CardShark', 'LuckyLou', 'BettyBets', 'RiskyRick', 'PokerPete', 'SlotsSam', 'DiceyDan', 'ChipChuck'];
 
@@ -1183,7 +1673,7 @@ const WEIGHTS = {HIT:30, BLOCK:25, CURSE:15, CRIT:12, HEAL:8, PIERCE:5, DRAIN:3,
 const G = {
     loggedIn: false,
     username: 'Guest',
-    avatar: '🐰',
+    avatar: 'rabbit',
     bankroll: 0,
     wins: 0,
     losses: 0,
@@ -1227,7 +1717,7 @@ function updateAllDisplays() {
         if (el) el.textContent = wallet;
     });
     const avatarEl = document.getElementById('home-avatar');
-    if (avatarEl) avatarEl.textContent = G.avatar;
+    if (avatarEl) avatarEl.innerHTML = renderPixelAvatar(G.avatar, 24);
     const nameEl = document.getElementById('home-username');
     if (nameEl) nameEl.textContent = G.username;
     document.getElementById('stat-wins').textContent = G.wins;
@@ -1259,9 +1749,9 @@ function loginAsGuest() {
 }
 
 // Login screen avatar selection
-function selectLoginAvatar(emoji) {
-    G.avatar = emoji;
-    document.getElementById('login-selected-avatar').textContent = emoji;
+function selectLoginAvatar(key) {
+    G.avatar = key;
+    document.getElementById('login-selected-avatar').innerHTML = renderPixelAvatar(key, 32);
     renderLoginAvatars();
 }
 
@@ -1269,7 +1759,7 @@ function renderLoginAvatars() {
     const grid = document.getElementById('login-avatar-grid');
     if (grid) {
         grid.innerHTML = AVATARS.map(a =>
-            `<div class="avatar-option ${a === G.avatar ? 'selected' : ''}" onclick="selectLoginAvatar('${a}')">${a}</div>`
+            `<div class="avatar-option ${a === G.avatar ? 'selected' : ''}" onclick="selectLoginAvatar('${a}')">${renderPixelAvatar(a, 24)}</div>`
         ).join('');
     }
 }
@@ -1302,8 +1792,8 @@ function saveNickname() {
     }
 }
 
-function selectAvatar(emoji) {
-    G.avatar = emoji;
+function selectAvatar(key) {
+    G.avatar = key;
     updateAllDisplays();
     renderAvatars();
 }
@@ -1311,7 +1801,7 @@ function selectAvatar(emoji) {
 function renderAvatars() {
     const grid = document.getElementById('avatar-grid');
     grid.innerHTML = AVATARS.map(a =>
-        `<div class="avatar-option ${a === G.avatar ? 'selected' : ''}" onclick="selectAvatar('${a}')">${a}</div>`
+        `<div class="avatar-option ${a === G.avatar ? 'selected' : ''}" onclick="selectAvatar('${a}')">${renderPixelAvatar(a, 24)}</div>`
     ).join('');
 }
 
@@ -1436,9 +1926,15 @@ function revealNextCards() {
 
     renderMatch();
 
-    // Auto-advance
-    if (!G.matchOver && G.revealIndex < 2) {
-        setTimeout(() => revealNextCards(), 2000);
+    // Auto-advance after each card, including triggering endMatch after card 3
+    if (!G.matchOver) {
+        setTimeout(() => {
+            if (G.revealIndex < 2) {
+                revealNextCards();
+            } else if (G.revealIndex === 2) {
+                endMatch();
+            }
+        }, 2000);
     }
 }
 
@@ -1563,6 +2059,13 @@ document.addEventListener('keydown', e => {
 // Init
 renderAvatars();
 renderLoginAvatars();
+
+// Render pixel art characters
+document.getElementById('login-selected-avatar').innerHTML = renderPixelAvatar('rabbit', 32);
+document.getElementById('login-bird').innerHTML = renderPixelAvatar('bird', 28);
+document.getElementById('login-duck').innerHTML = renderPixelAvatar('duck', 28);
+document.getElementById('menu-bird').innerHTML = renderPixelAvatar('bird', 28);
+document.getElementById('menu-duck').innerHTML = renderPixelAvatar('duck', 28);
 </script>
 </body>
 </html>
