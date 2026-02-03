@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STACK OR BUST</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
     <script src="audio.js" defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -675,6 +676,23 @@
         .sparkle:nth-child(2) { right: 15%; top: 8px; animation-delay: 0.7s; }
         .sparkle:nth-child(3) { left: 25%; top: 15px; animation-delay: 1.4s; }
 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            font-size: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        .connection-status.connected { background: #4caf7c; color: #fff; }
+        .connection-status.disconnected { background: #e05d5d; color: #fff; }
+
         /* ========================================
            PIXEL ART AVATARS
            ======================================== */
@@ -965,38 +983,58 @@
         <div id="lobbies-screen" class="screen">
             <div class="top-bar">
                 <button class="btn" onclick="showScreen('home')" style="font-size: 6px; padding: 8px;">← MENU</button>
-                <span class="pink" style="font-size: 8px;">LOBBIES</span>
+                <span class="pink" style="font-size: 8px;">MULTIPLAYER</span>
             </div>
 
-            <div class="flex gap-8 mb-12">
-                <button class="btn primary" onclick="createLobby()">CREATE LOBBY</button>
-                <button class="btn" onclick="refreshLobbies()">REFRESH</button>
+            <div class="panel mb-12">
+                <div class="panel-title">JOIN A FRIEND</div>
+                <div class="flex gap-8">
+                    <input type="text" class="input" id="lobby-code-input" placeholder="Enter code..." maxlength="4" style="text-transform: uppercase; font-size: 14px; text-align: center; letter-spacing: 4px;">
+                    <button class="btn primary" onclick="joinLobby()">JOIN</button>
+                </div>
             </div>
 
+            <div class="panel mb-12">
+                <div class="panel-title">CREATE A LOBBY</div>
+                <div class="flex gap-8 items-center">
+                    <span class="muted" style="font-size: 7px;">STAKE:</span>
+                    <select id="create-stake" class="input" style="width: auto; font-size: 8px; padding: 8px;">
+                        <option value="0.25">25¢</option>
+                        <option value="0.50">50¢</option>
+                        <option value="1" selected>$1</option>
+                        <option value="2">$2</option>
+                        <option value="5">$5</option>
+                        <option value="10">$10</option>
+                    </select>
+                    <button class="btn green" onclick="createLobby()">CREATE</button>
+                </div>
+            </div>
+
+            <div class="panel-title">OPEN LOBBIES</div>
             <div id="lobby-list">
-                <div class="lobby-item">
-                    <div class="lobby-info">
-                        <div class="lobby-name">High Rollers Only</div>
-                        <div class="lobby-details">$10 min • Created by CardKing</div>
+                <div class="muted text-center" style="font-size: 7px; padding: 20px;">No open lobbies. Create one!</div>
+            </div>
+        </div>
+
+        <!-- WAITING ROOM -->
+        <div id="waiting-screen" class="screen">
+            <div class="top-bar">
+                <button class="btn" onclick="leaveLobby()" style="font-size: 6px; padding: 8px;">← LEAVE</button>
+                <span class="pink" style="font-size: 8px;">WAITING</span>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center text-center">
+                <div class="panel" style="padding: 30px;">
+                    <div class="panel-title">YOUR LOBBY CODE</div>
+                    <div class="gold" style="font-size: 32px; letter-spacing: 8px; margin-bottom: 16px;" id="lobby-code-display">----</div>
+                    <p class="muted mb-12" style="font-size: 6px;">Share this code with your friend!</p>
+
+                    <div class="panel-title">PLAYERS (<span id="player-count">1</span>/2)</div>
+                    <div id="waiting-players" style="font-size: 8px;">
+                        <!-- Players will be shown here -->
                     </div>
-                    <div class="lobby-players">3/4</div>
-                    <button class="btn" style="font-size: 6px; padding: 8px; margin-left: 10px;">JOIN</button>
-                </div>
-                <div class="lobby-item">
-                    <div class="lobby-info">
-                        <div class="lobby-name">Beginners Welcome</div>
-                        <div class="lobby-details">25¢ min • Created by NewPlayer</div>
-                    </div>
-                    <div class="lobby-players">1/4</div>
-                    <button class="btn" style="font-size: 6px; padding: 8px; margin-left: 10px;">JOIN</button>
-                </div>
-                <div class="lobby-item">
-                    <div class="lobby-info">
-                        <div class="lobby-name">Chill Games</div>
-                        <div class="lobby-details">$1 min • Created by ChillDude</div>
-                    </div>
-                    <div class="lobby-players">2/4</div>
-                    <button class="btn" style="font-size: 6px; padding: 8px; margin-left: 10px;">JOIN</button>
+
+                    <p class="cyan" style="font-size: 6px; margin-top: 16px; animation: pulse 1s infinite;">Waiting for opponent...</p>
                 </div>
             </div>
         </div>
@@ -2066,6 +2104,271 @@ document.getElementById('login-bird').innerHTML = renderPixelAvatar('bird', 28);
 document.getElementById('login-duck').innerHTML = renderPixelAvatar('duck', 28);
 document.getElementById('menu-bird').innerHTML = renderPixelAvatar('bird', 28);
 document.getElementById('menu-duck').innerHTML = renderPixelAvatar('duck', 28);
+
+// ============================================================================
+// MULTIPLAYER
+// ============================================================================
+
+let socket = null;
+let isMultiplayer = false;
+let currentLobbyCode = null;
+let myPlayerId = null;
+let currentMatch = null;
+
+function connectToServer() {
+    if (socket && socket.connected) return;
+
+    // Connect to server (same host)
+    socket = io();
+
+    socket.on('connect', () => {
+        console.log('Connected to server!');
+        updateConnectionStatus(true);
+
+        // Register player
+        socket.emit('register', {
+            name: G.username,
+            avatar: G.avatar,
+            bankroll: G.bankroll
+        });
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from server');
+        updateConnectionStatus(false);
+    });
+
+    socket.on('registered', (data) => {
+        myPlayerId = data.playerId;
+        console.log('Registered as:', myPlayerId);
+    });
+
+    socket.on('lobbyList', (lobbies) => {
+        renderLobbyList(lobbies);
+    });
+
+    socket.on('lobbyCreated', (data) => {
+        currentLobbyCode = data.code;
+        document.getElementById('lobby-code-display').textContent = data.code;
+        showScreen('waiting');
+        renderWaitingPlayers([{name: G.username, avatar: G.avatar}]);
+    });
+
+    socket.on('lobbyUpdate', (data) => {
+        document.getElementById('player-count').textContent = data.players.length;
+        renderWaitingPlayers(data.players);
+    });
+
+    socket.on('error', (data) => {
+        alert(data.message);
+    });
+
+    socket.on('matchStart', (data) => {
+        isMultiplayer = true;
+        G.currentStake = data.stake;
+        G.bankroll -= data.stake;
+        showScreen('match');
+        document.getElementById('match-stake').textContent = '$' + data.stake + ' MATCH';
+        document.getElementById('draw-btn').style.display = 'block';
+        document.getElementById('draw-btn').textContent = 'DRAW CARD';
+    });
+
+    socket.on('matchUpdate', (data) => {
+        currentMatch = data.match;
+        myPlayerId = data.yourId;
+        renderMultiplayerMatch(data.match, data.yourId);
+    });
+
+    socket.on('opponentDisconnected', () => {
+        alert('Opponent disconnected!');
+        isMultiplayer = false;
+        showScreen('home');
+    });
+}
+
+function updateConnectionStatus(connected) {
+    let statusEl = document.getElementById('connection-status');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'connection-status';
+        statusEl.className = 'connection-status';
+        document.body.appendChild(statusEl);
+    }
+    statusEl.className = 'connection-status ' + (connected ? 'connected' : 'disconnected');
+    statusEl.textContent = connected ? '● ONLINE' : '● OFFLINE';
+}
+
+function renderLobbyList(lobbies) {
+    const container = document.getElementById('lobby-list');
+    if (lobbies.length === 0) {
+        container.innerHTML = '<div class="muted text-center" style="font-size: 7px; padding: 20px;">No open lobbies. Create one!</div>';
+        return;
+    }
+    container.innerHTML = lobbies.map(l => `
+        <div class="lobby-item">
+            <div class="lobby-info">
+                <div class="lobby-name">Lobby ${l.code}</div>
+                <div class="lobby-details">$${l.stake} • Host: ${l.host}</div>
+            </div>
+            <div class="lobby-players">${l.players}/2</div>
+            <button class="btn" style="font-size: 6px; padding: 8px; margin-left: 10px;" onclick="joinLobbyByCode('${l.code}')">JOIN</button>
+        </div>
+    `).join('');
+}
+
+function renderWaitingPlayers(players) {
+    const container = document.getElementById('waiting-players');
+    container.innerHTML = players.map(p => `
+        <div class="flex items-center gap-8 mb-8">
+            ${renderPixelAvatar(p.avatar, 20)}
+            <span>${p.name}</span>
+        </div>
+    `).join('');
+    document.getElementById('player-count').textContent = players.length;
+}
+
+function createLobby() {
+    if (!socket || !socket.connected) {
+        alert('Not connected to server. Please try again.');
+        return;
+    }
+    const stake = parseFloat(document.getElementById('create-stake').value);
+    socket.emit('createLobby', { stake });
+}
+
+function joinLobby() {
+    const code = document.getElementById('lobby-code-input').value.toUpperCase().trim();
+    if (code.length !== 4) {
+        alert('Please enter a 4-letter code');
+        return;
+    }
+    joinLobbyByCode(code);
+}
+
+function joinLobbyByCode(code) {
+    if (!socket || !socket.connected) {
+        alert('Not connected to server. Please try again.');
+        return;
+    }
+    currentLobbyCode = code;
+    socket.emit('joinLobby', { code });
+}
+
+function leaveLobby() {
+    if (socket && currentLobbyCode) {
+        socket.emit('leaveLobby', { code: currentLobbyCode });
+    }
+    currentLobbyCode = null;
+    showScreen('lobbies');
+}
+
+function renderMultiplayerMatch(match, myId) {
+    const opponentId = match.playerOrder.find(id => id !== myId);
+    const me = match.players[myId];
+    const opponent = match.players[opponentId];
+
+    // Update opponent info
+    document.getElementById('opponent-name').textContent = opponent.name;
+
+    // Update HP bars
+    updateHPBar('player', me.hp, me.maxHp);
+    updateHPBar('opponent', opponent.hp, opponent.maxHp);
+
+    // Render cards
+    const myCardsEl = document.getElementById('player-cards');
+    const oppCardsEl = document.getElementById('opponent-cards');
+    myCardsEl.innerHTML = '';
+    oppCardsEl.innerHTML = '';
+
+    me.cards.forEach((c, i) => {
+        myCardsEl.appendChild(createCard(c, false, i === match.revealIndex));
+    });
+
+    opponent.cards.forEach((c, i) => {
+        if (c.hidden) {
+            oppCardsEl.appendChild(createCard(c, true, false));
+        } else {
+            oppCardsEl.appendChild(createCard(c, false, i === match.revealIndex));
+        }
+    });
+
+    // Update combat log
+    const logEl = document.getElementById('combat-log');
+    logEl.innerHTML = match.combatLog.map(e => `<div class="log-entry ${e.type}">${e.msg}</div>`).join('');
+    logEl.scrollTop = logEl.scrollHeight;
+
+    // Update button
+    const btn = document.getElementById('draw-btn');
+    if (match.matchOver) {
+        btn.style.display = 'none';
+        G.matchOver = true;
+        G.playerWon = match.winner === myId;
+
+        // Play sounds
+        if (G.playerWon) {
+            if (typeof playWinSound === 'function') playWinSound();
+            G.wins++;
+            G.bankroll += match.stake * 2;
+        } else {
+            if (typeof playLoseSound === 'function') playLoseSound();
+            G.losses++;
+        }
+
+        // Show result after delay
+        setTimeout(() => {
+            document.getElementById('result-title').textContent = G.playerWon ? 'VICTORY!' : 'DEFEAT';
+            document.getElementById('result-title').className = 'result-title ' + (G.playerWon ? 'green' : 'red');
+            document.getElementById('result-amount').textContent = G.playerWon ? '+$' + (match.stake * 2).toFixed(2) : '-$' + match.stake.toFixed(2);
+            document.getElementById('result-player-hp').textContent = Math.max(0, me.hp);
+            document.getElementById('result-opponent-hp').textContent = Math.max(0, opponent.hp);
+            showScreen('result');
+        }, 1500);
+    } else {
+        btn.style.display = 'block';
+    }
+
+    updateAllDisplays();
+}
+
+function updateHPBar(who, hp, maxHp) {
+    const pct = Math.max(0, hp) / maxHp * 100;
+    const bar = document.getElementById(who + '-hp-bar');
+    const text = document.getElementById(who + '-hp-text');
+    bar.style.width = pct + '%';
+    bar.className = 'hp-bar-fill ' + (pct > 50 ? 'high' : pct > 25 ? 'medium' : 'low');
+    text.textContent = Math.max(0, hp) + '/' + maxHp;
+}
+
+// Override revealNextCards for multiplayer
+const originalRevealNextCards = revealNextCards;
+revealNextCards = function() {
+    if (isMultiplayer && socket) {
+        if (typeof playCardDrawSound === 'function') playCardDrawSound();
+        socket.emit('drawCard');
+    } else {
+        originalRevealNextCards();
+    }
+};
+
+// Override playAgain for multiplayer
+const originalPlayAgain = playAgain;
+playAgain = function() {
+    if (isMultiplayer && socket) {
+        socket.emit('playAgain');
+        G.matchOver = false;
+    } else {
+        originalPlayAgain();
+    }
+};
+
+// Connect when entering lobbies screen
+const originalShowScreen = showScreen;
+showScreen = function(id) {
+    originalShowScreen(id);
+    if (id === 'lobbies') {
+        connectToServer();
+    }
+};
 </script>
 </body>
 </html>
